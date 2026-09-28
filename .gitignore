@@ -89,3 +89,9 @@ fastlane/readme.md
 gen-external-apklibs
 
 # End of https://www.gitignore.io/api/android
+# shiroikuma-kaku
+*.jks
+/.scratch/
+.claude/settings.local.json
+app/src/main/assets/*.db-shm
+app/src/main/assets/*.db-wal

@@ -1,12 +1,31 @@
-Kaku: 画 (かく) - stroke (of a kanji, etc.), picture, drawing
+<div align="center">
 
-https://kaku.fuwafuwa.ca/
+# 白い熊 画
 
-Kaku is a fast, powerful Japanese dictionary that stays on top of all your apps. It uses optical character recognition (OCR) technology to recognize kanji on the device screen for you (rather than the slowww tedious process of looking up individual characters manually), making it perfect for Japanese learners who want to study by reading raw manga, play untranslated games, and so on without the hassle of switching apps.
+**Japanese OCR popup dictionary — point a capture box at any app, read the Japanese under it.**
 
-[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
-     alt="Get it on F-Droid"
-     height="80">](https://f-droid.org/packages/ca.fuwafuwa.kaku/)
-[<img src="https://play.google.com/intl/en_us/badges/images/generic/en-play-badge.png"
-     alt="Get it on Google Play"
-     height="80">](https://play.google.com/store/apps/details?id=ca.fuwafuwa.kaku)
+A fork of [Kaku](https://github.com/0xbad1d3a5/Kaku), picked up where upstream stopped in 2022:
+a modern, Google-free and network-free build in black and yellow, with its own settings page
+(**白い熊 画 UI**), and on the way: on-device **MangaOCR** and **Yomitan dictionaries**.
+
+Installs **side-by-side** with Kaku (app id `shiroikuma.kaku`).
+
+**📥 Releases: [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-kaku/releases)**
+
+</div>
+
+---
+
+## Built on Kaku
+A fork of [Kaku](https://github.com/0xbad1d3a5/Kaku) by 0xbad1d3a5 (app id `shiroikuma.kaku`, so it
+coexists with the original). Kaku's code is under the BSD 3-Clause licence
+([`LICENSE-Kaku-BSD-3`](LICENSE-Kaku-BSD-3)); this fork is distributed under the GNU GPL v3
+([`LICENSE`](LICENSE)).
+
+## Building
+```bash
+git clone https://github.com/ShiroiKuma0/shiroikuma-kaku.git && cd shiroikuma-kaku
+git checkout custom
+# keystore.properties (storeFile / storePassword / keyAlias / keyPassword) is required for release builds
+./gradlew buildFork
+```

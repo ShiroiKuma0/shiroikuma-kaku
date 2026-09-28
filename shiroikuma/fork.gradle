@@ -1,0 +1,135 @@
+// ---------------------------------------------------------------------------------------------
+// shiroikuma-kaku fork layer — identity, signing, versioning and the buildFork pipeline.
+//
+// Applied from the END of app/build.gradle by one added line, so everything here overrides
+// upstream's android {} block without editing it:
+//
+//   - app id shiroikuma.kaku (label 白い熊 画), arm64-v8a only;
+//   - signing from the gitignored keystore.properties at the repo root — a release build without
+//     it fails instead of silently falling back to the debug key;
+//   - versionName "<VERSION_NAME>+<BUILD_NUMBER padded to 3>", versionCode
+//     major*100000000 + minor*1000000 + patch*10000 + BUILD_NUMBER, from shiroikuma/fork.properties;
+//   - `buildFork`: assemble the release, copy the APK to ~/tmp under the house name, bump.
+//
+// See .claude/skills/build-apk.
+// ---------------------------------------------------------------------------------------------
+
+def repoRoot = rootProject.rootDir
+
+// --- Versioning ------------------------------------------------------------------------------
+def forkProps = new Properties()
+def forkPropsFile = new File(repoRoot, 'shiroikuma/fork.properties')
+forkPropsFile.withInputStream { forkProps.load(it) }
+
+def forkVersionTriplet = forkProps.getProperty('VERSION_NAME').trim()
+def forkBuildNumber = forkProps.getProperty('BUILD_NUMBER', '1').trim() as int
+def forkLastBuiltVersionCode = forkProps.getProperty('LAST_BUILT_VERSION_CODE', '0').trim() as int
+def (vMajor, vMinor, vPatch) = forkVersionTriplet.tokenize('.').collect { it as int }
+if (forkBuildNumber < 1 || forkBuildNumber > 9999 || vMinor > 99 || vPatch > 99 || vMajor > 20) {
+    throw new GradleException("shiroikuma/fork.properties out of range for the versionCode formula: " +
+            "${forkVersionTriplet} / BUILD_NUMBER ${forkBuildNumber}")
+}
+
+// Zero-padded in the NAME only, so +002 sorts before +010; versionCode keeps the plain integer.
+def forkVersionName = "${forkVersionTriplet}+${String.format('%03d', forkBuildNumber)}"
+def forkVersionCode = vMajor * 100000000 + vMinor * 1000000 + vPatch * 10000 + forkBuildNumber
+println "shiroikuma-kaku: ${forkVersionName} (${forkVersionCode})"
+
+// --- Signing ---------------------------------------------------------------------------------
+def keystoreProps = new Properties()
+def keystoreFile = new File(repoRoot, 'keystore.properties')
+if (keystoreFile.exists()) {
+    keystoreFile.withInputStream { keystoreProps.load(it) }
+} else {
+    println "shiroikuma: no keystore.properties — release builds will fail (see .claude/skills/build-apk)."
+}
+
+android {
+    defaultConfig {
+        applicationId "shiroikuma.kaku"
+        versionCode forkVersionCode
+        versionName forkVersionName
+        ndk {
+            abiFilters "arm64-v8a"
+        }
+    }
+    signingConfigs {
+        shiroikuma {
+            if (keystoreFile.exists()) {
+                storeFile file(keystoreProps.getProperty('storeFile'))
+                storePassword keystoreProps.getProperty('storePassword')
+                keyAlias keystoreProps.getProperty('keyAlias')
+                keyPassword keystoreProps.getProperty('keyPassword')
+            }
+        }
+    }
+    buildTypes {
+        release {
+            signingConfig signingConfigs.shiroikuma
+        }
+    }
+}
+
+gradle.taskGraph.whenReady { graph ->
+    if (!keystoreFile.exists() && graph.allTasks.any { it.name ==~ /(assemble|bundle|package)Release|buildFork/ }) {
+        throw new GradleException("keystore.properties is missing — refusing to build an APK not signed " +
+                "with the shiroikuma-kaku key. Restore it (see .claude/skills/build-apk).")
+    }
+}
+
+// --- buildFork -------------------------------------------------------------------------------
+tasks.register("buildFork") {
+    group = "build"
+    description = "Build the signed release APK, copy it to ~/tmp, and bump BUILD_NUMBER."
+    dependsOn("assembleRelease")
+
+    def releaseApkDir = new File(projectDir, "build/outputs/apk/release")
+    def propsFile = forkPropsFile
+    def targetDir = new File(System.getProperty("user.home"), "tmp")
+    def apkName = "shiroikuma-kaku_${forkVersionName}_arm64-v8a.apk"
+    def builtCode = forkVersionCode
+    def lastBuiltCode = forkLastBuiltVersionCode
+    def nextBuildNumber = forkBuildNumber + 1
+    def sdkDir = android.sdkDirectory
+
+    doFirst {
+        if (builtCode <= lastBuiltCode) {
+            throw new GradleException("versionCode ${builtCode} would not exceed the highest already " +
+                    "built (${lastBuiltCode}). Raise BUILD_NUMBER in shiroikuma/fork.properties.")
+        }
+    }
+
+    doLast {
+        def apks = releaseApkDir.listFiles({ d, n -> n.endsWith(".apk") } as FilenameFilter)
+        if (!apks) {
+            throw new GradleException("No APK found in ${releaseApkDir}")
+        }
+        def apk = apks.sort { it.name }[0]
+
+        // Refuse anything signed with a debug key.
+        def buildTools = new File(sdkDir, "build-tools").listFiles()?.findAll { new File(it, "apksigner").exists() }
+        if (!buildTools) {
+            throw new GradleException("apksigner not found under ${sdkDir}/build-tools")
+        }
+        def apksigner = new File(buildTools.sort { a, b -> a.name <=> b.name }.last(), "apksigner")
+        def proc = new ProcessBuilder(apksigner.path, "verify", "--print-certs", apk.path).redirectErrorStream(true).start()
+        def certs = proc.inputStream.text
+        if (proc.waitFor() != 0 || certs.contains("CN=Android Debug")) {
+            throw new GradleException("APK signature check failed:\n${certs}")
+        }
+
+        targetDir.mkdirs()
+        def target = new File(targetDir, apkName)
+        if (target.exists()) {
+            throw new GradleException("${target} already exists — never overwrite a build.")
+        }
+        java.nio.file.Files.copy(apk.toPath(), target.toPath())
+        println "\u001B[1;36m>>> ${target.absolutePath}\u001B[0m"
+        println "\u001B[1;36m>>> versionCode ${builtCode}\u001B[0m"
+
+        propsFile.text = propsFile.text
+                .replaceAll(/(?m)^BUILD_NUMBER=\d+$/, "BUILD_NUMBER=${nextBuildNumber}")
+                .replaceAll(/(?m)^LAST_BUILT_VERSION_CODE=\d+$/, "LAST_BUILT_VERSION_CODE=${builtCode}")
+        println "\u001B[1;36m>>> BUILD_NUMBER bumped to ${nextBuildNumber}\u001B[0m"
+    }
+}
