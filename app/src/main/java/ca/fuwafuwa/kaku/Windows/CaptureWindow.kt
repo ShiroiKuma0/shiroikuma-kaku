@@ -19,6 +19,7 @@ import java.io.IOException
 
 import androidx.core.content.ContextCompat
 import ca.fuwafuwa.kaku.*
+import shiroikuma.kaku.KakuSkin
 import ca.fuwafuwa.kaku.MainService
 import ca.fuwafuwa.kaku.Ocr.BoxParams
 import ca.fuwafuwa.kaku.Ocr.OcrParams
@@ -39,8 +40,6 @@ class CaptureWindow(context: Context, windowCoordinator: WindowCoordinator) : Wi
     private val mWindowBox: View
     private val mImageView: ImageView
     private val mFadeRepeat: Animation
-    private val mBorderDefault: Drawable
-    private val mBorderReady: Drawable
 
     private var mPrefs: Prefs? = null
     private var mThreshold: Int = 0
@@ -247,8 +246,6 @@ class CaptureWindow(context: Context, windowCoordinator: WindowCoordinator) : Wi
 
         mImageView = window.findViewById(R.id.capture_image)
         mFadeRepeat = AnimationUtils.loadAnimation(this.context, R.anim.fade_repeat)
-        mBorderDefault = this.context.resources.getDrawable(R.drawable.bg_translucent_border_0_blue_blue, null)
-        mBorderReady = this.context.resources.getDrawable(R.drawable.bg_transparent_border_0_nil_ready, null)
 
         mThreshold = 128
         mLastDoubleTapTime = System.currentTimeMillis()
@@ -375,7 +372,7 @@ class CaptureWindow(context: Context, windowCoordinator: WindowCoordinator) : Wi
         (context as MainService).handler.post {
             Log.d(TAG, "showLoadingAnimation")
 
-            mWindowBox.background = mBorderDefault
+            mWindowBox.background = KakuSkin.captureFrame(context, false, true)
             mImageView.imageAlpha = 0
             mWindowBox.animation = mFadeRepeat
             mWindowBox.startAnimation(mFadeRepeat)
@@ -386,7 +383,7 @@ class CaptureWindow(context: Context, windowCoordinator: WindowCoordinator) : Wi
     {
         (context as MainService).handler.post {
             mProcessingOcr = false
-            mWindowBox.background = mBorderReady
+            mWindowBox.background = KakuSkin.captureFrame(context, true, false)
             mWindowBox.clearAnimation()
             Log.d(TAG, "stopLoadingAnimation - instant: $instant")
             if (instant)
@@ -404,6 +401,16 @@ class CaptureWindow(context: Context, windowCoordinator: WindowCoordinator) : Wi
     fun hideInstantWindows()
     {
         windowCoordinator.getWindow(WINDOW_INSTANT_KANJI).hide()
+    }
+
+    /**
+     * The capture box keeps its fixed 80 % opacity (not the lookup windows' setting): its red
+     * ready line must stay red enough in the screenshot for checkScreenshotIsReady.
+     */
+    override fun applySkin()
+    {
+        window.findViewById<View>(R.id.capture_frame)?.background = KakuSkin.captureFrame(context, false, false)
+        window.findViewById<View>(R.id.capture_box)?.background = KakuSkin.captureFrame(context, true, false)
     }
 
     override fun getDefaultParams(): WindowManager.LayoutParams
@@ -466,8 +473,8 @@ class CaptureWindow(context: Context, windowCoordinator: WindowCoordinator) : Wi
     {
         when (e.action)
         {
-            MotionEvent.ACTION_DOWN -> mWindowBox.background = mBorderDefault
-            MotionEvent.ACTION_UP -> mWindowBox.background = mBorderReady
+            MotionEvent.ACTION_DOWN -> mWindowBox.background = KakuSkin.captureFrame(context, false, true)
+            MotionEvent.ACTION_UP -> mWindowBox.background = KakuSkin.captureFrame(context, true, false)
         }
     }
 

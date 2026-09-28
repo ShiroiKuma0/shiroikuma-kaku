@@ -1,5 +1,7 @@
 package ca.fuwafuwa.kaku.Windows.Views
 
+import shiroikuma.kaku.KakuSkin
+import shiroikuma.kaku.KakuUi
 import android.content.Context
 import android.graphics.Color
 import android.util.AttributeSet
@@ -67,13 +69,22 @@ class KanjiCharacterView : FrameLayout, GestureDetector.OnGestureListener, IReca
 
         mKanjiTextView = TextView(mContext)
         mKanjiTextView.gravity = Gravity.CENTER
-        mKanjiTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 20.toFloat())
-        mKanjiTextView.setTextColor(Color.BLACK)
         addView(mKanjiTextView)
 
         mIconImageView = ImageView(mContext)
         mIconImageView.visibility = INVISIBLE
         addView(mIconImageView)
+
+        restyle()
+    }
+
+    /** Text colour, size and font, and the swipe icons' tint, from the 白い熊 画 UI settings. */
+    fun restyle()
+    {
+        mKanjiTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, KakuUi.i(KakuUi.CHAR_FONT_SIZE).toFloat())
+        mKanjiTextView.setTextColor(KakuUi.i(KakuUi.C_CHAR_TEXT))
+        mKanjiTextView.typeface = KakuSkin.charTypeface(mContext)
+        mIconImageView.setColorFilter(KakuUi.i(KakuUi.C_ICON))
     }
 
     fun getSquareChar(): ISquareChar
@@ -103,12 +114,12 @@ class KanjiCharacterView : FrameLayout, GestureDetector.OnGestureListener, IReca
 
     fun highlight()
     {
-        background = mContext.getDrawable(R.drawable.bg_translucent_border_0_blue_blue)
+        background = KakuSkin.charHighlight(mContext)
     }
 
     fun highlightLight()
     {
-        background = mContext.getDrawable(R.drawable.bg_transparent_border_0_nil_default)
+        background = KakuSkin.charTouched(mContext)
     }
 
     fun unhighlight()

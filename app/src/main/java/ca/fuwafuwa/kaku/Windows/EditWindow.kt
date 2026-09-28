@@ -1,5 +1,7 @@
 package ca.fuwafuwa.kaku.Windows
 
+import shiroikuma.kaku.KakuSkin
+import shiroikuma.kaku.KakuUi
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
@@ -46,6 +48,16 @@ class EditWindow(context: Context, windowCoordinator: WindowCoordinator) : Windo
     override fun onResize(e: MotionEvent): Boolean
     {
         return false
+    }
+
+    override fun applySkin()
+    {
+        super.applySkin()
+        window.findViewById<ImageView>(R.id.edit_kanji_image).setBackgroundColor(KakuUi.i(KakuUi.C_EDIT_BG))
+        mChoiceEditText.setBackgroundColor(KakuUi.i(KakuUi.C_EDIT_BG))
+        mChoiceEditText.setTextColor(KakuUi.i(KakuUi.C_EDIT_TEXT))
+        mChoiceEditText.setHintTextColor((KakuUi.i(KakuUi.C_EDIT_TEXT) and 0x00FFFFFF) or 0x88000000.toInt())
+        mChoiceEditText.typeface = KakuSkin.charTypeface(context)
     }
 
     override fun show()

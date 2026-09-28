@@ -23,6 +23,8 @@ import java.util.List;
 import ca.fuwafuwa.kaku.Interfaces.Stoppable;
 import ca.fuwafuwa.kaku.KakuTools;
 import ca.fuwafuwa.kaku.R;
+import shiroikuma.kaku.KakuSkin;
+import shiroikuma.kaku.KakuUi;
 import ca.fuwafuwa.kaku.Windows.Interfaces.WindowListener;
 import ca.fuwafuwa.kaku.Windows.Views.ResizeView;
 import ca.fuwafuwa.kaku.Windows.Views.WindowView;
@@ -61,6 +63,8 @@ public abstract class Window implements Stoppable, WindowListener {
 
     private boolean mWindowClosed = false;
     private long mParamUpdateTimer = System.currentTimeMillis();
+    /** The KakuUi stamp this window was last painted with (0 = never). */
+    private int mSkinStamp = 0;
 
     public Window(Context context, WindowCoordinator windowCoordinator, int contentView){
 
@@ -178,6 +182,7 @@ public abstract class Window implements Stoppable, WindowListener {
 
         synchronized (this)
         {
+            refreshSkin();
             if (!addedToWindowManager)
             {
                 windowManager.addView(window, params);
@@ -186,6 +191,23 @@ public abstract class Window implements Stoppable, WindowListener {
 
             windowManager.updateViewLayout(window, params);
         }
+    }
+
+    /** Repaint in the 白い熊 画 UI settings if they changed since this window was last painted. */
+    protected final void refreshSkin()
+    {
+        if (mSkinStamp == KakuUi.stamp()) return;
+        mSkinStamp = KakuUi.stamp();
+        applySkin();
+    }
+
+    /**
+     * Paint this window from {@link KakuUi}. Called before the window shows whenever the settings
+     * changed; overrides paint their own surfaces and call super for the window opacity.
+     */
+    protected void applySkin()
+    {
+        params.alpha = KakuSkin.windowAlpha();
     }
 
     public void hide()
@@ -370,7 +392,7 @@ public abstract class Window implements Stoppable, WindowListener {
         params.type = Build.VERSION.SDK_INT > 25 ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE;
         params.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
         params.format = PixelFormat.TRANSLUCENT;
-        params.alpha = 0.8F;
+        params.alpha = KakuSkin.windowAlpha();
         params.x = 0;
         params.y = 0;
         params.gravity = Gravity.TOP | Gravity.LEFT;

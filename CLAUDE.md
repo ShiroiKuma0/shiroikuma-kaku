@@ -38,7 +38,7 @@ Tesseract as fallback) instead of Tesseract 3; then **Yomitan dictionaries** ins
 | --- | --- | --- |
 | applicationId | `shiroikuma.kaku` | `shiroikuma/fork.gradle` |
 | App label | `白い熊 画` | `res/values/strings.xml` `app_name` |
-| Our settings page | **`白い熊 画 UI`** — every configurable item of the fork; opened by a **long-press on the Settings cog** of the main screen | (to be built) |
+| Our settings page | **`白い熊 画 UI`** — every configurable item of the fork; opened by a **long-press on the Settings cog** of the main screen (a tap opens it too — Kaku has no settings page of its own) | `shiroikuma/kaku/KakuUiActivity.java` (see *The UI page* below) |
 | File prefix | `shiroikuma-kaku_` — APKs `shiroikuma-kaku_<ver>+NNN_arm64-v8a.apk`, exports `shiroikuma-kaku_<yyyy-MM-dd_HH-mm-ss>.zip` | |
 | Launcher icon | Kaku's 画 tile traced in the house style: the tile as a yellow rounded outline, 画 solid yellow, on black (the `tile` variant, confirmed by 白い熊 2026-09-28); the notification icon is 画 alone | `shiroikuma/icon/trace-icon.py` → `kaku-icon.svg` / `kaku-notification.svg` → `gen-icons.py` writes every icon resource in `app/src/main/res` |
 | Keystore | `~/.android-keystores/shiroikuma-kaku.jks`, alias `kaku` | `keystore.properties` (gitignored) |
@@ -70,6 +70,33 @@ Upstream is dead, so we edit its files freely; still keep our own code recognisa
   OCR on Tesseract 5 via Tesseract4Android (jitpack), initialised with the legacy engine
   (`OEM_TESSERACT_ONLY`) so the kanji-choice window keeps per-character alternatives.
 - New fork code lives under `app/src/main/java/shiroikuma/kaku/`.
+
+## The UI page, the skin, Export / Import
+
+All in `app/src/main/java/shiroikuma/kaku/` (ported from shiroikuma-doksho's kit):
+
+- **`KakuUi`** — every setting with its default (prefs file `kaku_ui`); pure `#000000` grounds and
+  `#FFFF00` ink / borders. `stamp()` bumps on every change.
+- **`KakuUiActivity`** — the page, built in code in the **kxkb UI page format**: 36 / 54 / 72 / 90 dp
+  indents, bold headings underlined as wide as their text, a 1 px rule between top-level groups,
+  tight 4–5 dp rows. Sections: **Export / Import** (first), **Fork behaviour** (reset), **Colours**
+  (App screens · Lookup windows · Dictionary text · Recognised characters · Kanji choice · Capture
+  box · Handwriting editor · Dialogs), **Borders & shapes** (windows: width 0–8 dp, corners 0–40 dp,
+  opacity; word highlight width; dialogs), **Fonts** (Dictionary text · Recognised characters ·
+  Interface text · Page headings), **About**. Every group ends in a live preview.
+- **`ColorPickerDialog`** (one-click remembered swatches, preview, A/R/G/B sliders),
+  **`FontPickerDialog`** + **`KakuFonts`** (every font drawn in its own glyphs; imports copied into
+  `files/fonts`), **`KakuViews`** (bordered dialogs, pills, toast).
+- **`KakuSkin`** — paints the overlay windows from `KakuUi` (each `Window` repaints in `applySkin()`
+  when the stamp changed, via `refreshSkin()` in `show()`), builds the capture-box frames, and paints
+  every activity (`KakuApp` lifecycle hook). `DictText` styles dictionary results (headword, reading,
+  part of speech, meanings). The capture box keeps its fixed 80 % opacity and its red ready line.
+- **`ExportImportPanel`** + **`backup/ShiroikumaExport`** — SAF export directory (device-local
+  `kaku_eximport`), ZIP `shiroikuma-kaku_<yyyy-MM-dd_HH-mm-ss>.zip` written as `.part` and renamed;
+  categories **ui** (page prefs + fonts), **settings** (the app's prefs minus device state),
+  **ocr** (`files/tessdata`), **dictionary** (`files/*.db`). Import merges prefs with `commit()` and
+  replaces data files atomically. Dialog chain: export success OK / import 「Later」 close info +
+  panel + page; 「Restart now」 restarts; failures leave the panel open.
 
 ## Hard rules of this app
 

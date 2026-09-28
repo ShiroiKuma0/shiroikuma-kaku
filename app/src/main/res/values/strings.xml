@@ -33,6 +33,10 @@
     <string name="grant_text">白い熊 画 uses optical character recognition (OCR) to read text from images, and works by taking screenshots of your screen while it is active. After granting the permissions, please restart 白い熊 画.\n\n白い熊 画 works completely offline: it has no network access at all and never transmits any data.</string>
     <string name="grant_ok">Grant</string>
 
+    <string name="no_dictionary_entry">No dictionary entry found</string>
+    <string name="no_characters_recognized">No characters recognised.</string>
+    <string name="handwrite_here">Handwrite here</string>
+
     <!-- Tutorial -->
     <string name="tutorial_label">白い熊 画 tutorial</string>
     <string name="tut_welcome_title">Welcome to 白い熊 画!</string>

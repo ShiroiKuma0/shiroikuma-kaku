@@ -89,6 +89,15 @@ class KanjiGridView : SquareGridView, IRecalculateKanjiViews
         }
     }
 
+    /** Repaint every character cell from the 白い熊 画 UI settings. */
+    fun restyle()
+    {
+        for (k in kanjiViewList)
+        {
+            k.restyle()
+        }
+    }
+
     fun unhighlightAll()
     {
         for (k in kanjiViewList)

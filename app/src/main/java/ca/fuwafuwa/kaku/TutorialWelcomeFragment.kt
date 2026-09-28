@@ -1,5 +1,6 @@
 package ca.fuwafuwa.kaku
 
+import shiroikuma.kaku.KakuSkin
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -14,6 +15,7 @@ class TutorialWelcomeFragment : Fragment()
     {
         rootView = inflater.inflate(R.layout.fragment_welcome, container, false)
 
+        KakuSkin.applyToTree(rootView)
         return rootView
     }
 

@@ -1,5 +1,6 @@
 package ca.fuwafuwa.kaku.Windows
 
+import shiroikuma.kaku.KakuSkin
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
@@ -91,11 +92,11 @@ class KanjiChoiceWindow(context: Context, windowCoordinator: WindowCoordinator) 
             if (checkForSelection(kanjiView, e) && isTextView)
             {
                 inKanji = true
-                kanjiView.setBackgroundResource(R.drawable.bg_solid_border_0_blue_black)
+                kanjiView.background = KakuSkin.choiceCell(context, true)
             }
             else if (isTextView)
             {
-                kanjiView.setBackgroundResource(R.drawable.bg_solid_border_0_white_black)
+                kanjiView.background = KakuSkin.choiceCell(context, false)
             }
         }
 
@@ -294,15 +295,9 @@ class KanjiChoiceWindow(context: Context, windowCoordinator: WindowCoordinator) 
         tv.gravity = Gravity.CENTER
         tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, (kanjiWidth / 1.5).toFloat())
 
-        when
-        {
-            LangUtils.IsHiragana(kanji[0]) -> tv.setTextColor(ContextCompat.getColor(context, R.color.kana_pink))
-            LangUtils.IsKatakana(kanji[0]) -> tv.setTextColor(ContextCompat.getColor(context, R.color.kana_blue))
-            LangUtils.IsKanji(kanji[0]) -> tv.setTextColor(Color.BLACK)
-            else -> tv.setTextColor(Color.GRAY)
-        }
-
-        tv.setBackgroundResource(R.drawable.bg_solid_border_0_white_black)
+        tv.setTextColor(KakuSkin.choiceTextColor(kanji[0]))
+        tv.typeface = KakuSkin.charTypeface(context)
+        tv.background = KakuSkin.choiceCell(context, false)
         tv.width = kanjiWidth
         tv.height = kanjiHeight
         tv.x = x.toFloat()
@@ -330,7 +325,7 @@ class KanjiChoiceWindow(context: Context, windowCoordinator: WindowCoordinator) 
         charImage.scaleType = ImageView.ScaleType.FIT_CENTER
         charImage.cropToPadding = true
         charImage.setImageBitmap(bitmapChar)
-        charImage.background = context.getDrawable(R.drawable.bg_translucent_border_0_black_black)
+        charImage.background = KakuSkin.choiceImage(context)
         choiceWindow.addView(charImage)
         currentKanjiViews.add(charImage)
     }

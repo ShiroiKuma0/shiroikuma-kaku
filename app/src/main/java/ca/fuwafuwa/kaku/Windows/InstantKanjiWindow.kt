@@ -1,5 +1,6 @@
 package ca.fuwafuwa.kaku.Windows
 
+import shiroikuma.kaku.KakuSkin
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -148,10 +149,18 @@ class InstantKanjiWindow(context: Context,
         super.stop()
     }
 
+    override fun applySkin()
+    {
+        super.applySkin()
+        kanjiFrame.background = KakuSkin.windowPanel(context)
+        kanjiGrid.restyle()
+    }
+
     override fun show()
     {
         synchronized(this)
         {
+            refreshSkin()
             if (!addedToWindowManager)
             {
                 if (isBoxHorizontal)

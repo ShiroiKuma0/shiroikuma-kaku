@@ -109,7 +109,7 @@ class OcrRunnable(context: Context, private var mCaptureWindow: CaptureWindow?) 
                         sendOcrResultToContext(OcrResult(displayData, ocrTime))
                     } else
                     {
-                        sendToastToContext("No Characters Recognized.")
+                        sendToastToContext(mContext.getString(R.string.no_characters_recognized))
                     }
 
                     mCaptureWindow!!.stopLoadingAnimation(mOcrParams!!.instantMode)

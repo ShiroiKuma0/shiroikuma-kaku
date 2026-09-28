@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- shiroikuma-kaku: the 白い熊 画 UI page and its Export / Import panel.
+     Not translated: the page is the fork's own, in the house's English + Japanese. -->
+<resources>
+
+    <!-- page sections -->
+    <string name="kaku_ui_sec_eximport" translatable="false">Export / Import</string>
+    <string name="kaku_ui_sec_behaviour" translatable="false">Fork behaviour</string>
+    <string name="kaku_ui_sec_colours" translatable="false">Colours</string>
+    <string name="kaku_ui_sec_shapes" translatable="false">Borders &amp; shapes</string>
+    <string name="kaku_ui_sec_fonts" translatable="false">Fonts</string>
+    <string name="kaku_ui_sec_about" translatable="false">About</string>
+
+    <string name="kaku_ui_sub_screens" translatable="false">App screens</string>
+    <string name="kaku_ui_sub_windows" translatable="false">Lookup windows</string>
+    <string name="kaku_ui_sub_dict" translatable="false">Dictionary text</string>
+    <string name="kaku_ui_sub_chars" translatable="false">Recognised characters</string>
+    <string name="kaku_ui_sub_choice" translatable="false">Kanji choice (swipe down on a character)</string>
+    <string name="kaku_ui_sub_capture" translatable="false">Capture box</string>
+    <string name="kaku_ui_sub_edit" translatable="false">Handwriting editor</string>
+    <string name="kaku_ui_sub_dialogs" translatable="false">Dialogs</string>
+    <string name="kaku_ui_sub_ui_text" translatable="false">Interface text</string>
+    <string name="kaku_ui_sub_headings" translatable="false">Page headings</string>
+
+    <!-- behaviour -->
+    <string name="kaku_ui_reset" translatable="false">Reset to the house defaults</string>
+    <string name="kaku_ui_reset_desc" translatable="false">Black ground, yellow ink and borders — every setting on this page.</string>
+    <string name="kaku_ui_reset_confirm" translatable="false">Every colour, border, corner and font on this page goes back to the black-yellow defaults. Imported fonts and remembered colours are kept.</string>
+    <string name="kaku_ui_reset_action" translatable="false">Reset</string>
+
+    <!-- colours -->
+    <string name="kaku_ui_c_bg" translatable="false">Background</string>
+    <string name="kaku_ui_c_text" translatable="false">Text</string>
+    <string name="kaku_ui_c_text2" translatable="false">Secondary text</string>
+    <string name="kaku_ui_c_accent" translatable="false">Accent (links · progress · controls)</string>
+    <string name="kaku_ui_c_win_bg" translatable="false">Window background</string>
+    <string name="kaku_ui_c_win_border" translatable="false">Window border</string>
+    <string name="kaku_ui_win_alpha" translatable="false">Window opacity</string>
+    <string name="kaku_ui_c_dict_headword" translatable="false">Headword</string>
+    <string name="kaku_ui_c_dict_reading" translatable="false">Reading</string>
+    <string name="kaku_ui_c_dict_pos" translatable="false">Part of speech · inflection</string>
+    <string name="kaku_ui_c_dict_text" translatable="false">Meanings</string>
+    <string name="kaku_ui_c_char_text" translatable="false">Characters</string>
+    <string name="kaku_ui_c_char_hl_fill" translatable="false">Looked-up word — fill</string>
+    <string name="kaku_ui_c_char_hl_border" translatable="false">Looked-up word — border</string>
+    <string name="kaku_ui_c_icon" translatable="false">Swipe icons (swap · edit · delete)</string>
+    <string name="kaku_ui_c_choice_bg" translatable="false">Candidate background</string>
+    <string name="kaku_ui_c_choice_border" translatable="false">Candidate border</string>
+    <string name="kaku_ui_c_choice_active" translatable="false">Candidate under the finger</string>
+    <string name="kaku_ui_c_choice_kanji" translatable="false">Kanji</string>
+    <string name="kaku_ui_c_choice_hiragana" translatable="false">Hiragana</string>
+    <string name="kaku_ui_c_choice_katakana" translatable="false">Katakana</string>
+    <string name="kaku_ui_c_choice_other" translatable="false">Other characters</string>
+    <string name="kaku_ui_c_capture_border" translatable="false">Frame</string>
+    <string name="kaku_ui_c_capture_busy" translatable="false">Fill while reading</string>
+    <string name="kaku_ui_capture_note" translatable="false">The 1 px red line on the box\'s edge is how 白い熊 画 finds the box in the screenshot — it stays red.</string>
+    <string name="kaku_ui_c_edit_bg" translatable="false">Background</string>
+    <string name="kaku_ui_c_edit_text" translatable="false">Text</string>
+    <string name="kaku_ui_c_dlg_bg" translatable="false">Dialog background</string>
+    <string name="kaku_ui_c_dlg_text" translatable="false">Dialog text</string>
+    <string name="kaku_ui_c_dlg_border" translatable="false">Dialog border</string>
+
+    <!-- shapes -->
+    <string name="kaku_ui_border_w" translatable="false">Border width</string>
+    <string name="kaku_ui_radius" translatable="false">Corner roundness</string>
+    <string name="kaku_ui_hl_border_w" translatable="false">Looked-up word — border width</string>
+
+    <!-- fonts -->
+    <string name="kaku_ui_font_family" translatable="false">Font</string>
+    <string name="kaku_ui_font_weight" translatable="false">Weight</string>
+    <string name="kaku_ui_font_size" translatable="false">Size</string>
+    <string name="kaku_ui_font_scale" translatable="false">Size</string>
+    <string name="kaku_ui_head_scale" translatable="false">Headword size</string>
+    <string name="kaku_ui_head_sample" translatable="false">Colours · 見出し</string>
+    <string name="kaku_font_system" translatable="false">System default</string>
+    <string name="kaku_font_sample" translatable="false">AaIiMmOoQqWw 012 白い熊 画 漢字かなカナ</string>
+    <string name="kaku_font_import" translatable="false">Import font…</string>
+    <string name="kaku_font_import_row" translatable="false">Import a font…</string>
+    <string name="kaku_font_import_desc" translatable="false">A .ttf / .otf / .ttc from anywhere — copied into the app, then offered in every font picker.</string>
+    <string name="kaku_font_imported" translatable="false">Imported: %1$s</string>
+    <string name="kaku_font_import_fail_title" translatable="false">Font import failed</string>
+
+    <!-- previews -->
+    <string name="kaku_ui_preview" translatable="false">Preview</string>
+    <string name="kaku_ui_pv_title" translatable="false">白い熊 画</string>
+    <string name="kaku_ui_pv_secondary" translatable="false">Japanese OCR dictionary</string>
+    <string name="kaku_ui_pv_link" translatable="false">Tap here to view the tutorial</string>
+    <string name="kaku_ui_pv_headword" translatable="false">食べる</string>
+    <string name="kaku_ui_pv_reading" translatable="false"> (たべる)</string>
+    <string name="kaku_ui_pv_pos" translatable="false">(v1,vt) </string>
+    <string name="kaku_ui_pv_meaning" translatable="false">to eat ② (v1,vt) to live on (e.g. a salary)</string>
+    <string name="kaku_ui_pv_chars" translatable="false">猫が魚を食べる</string>
+    <string name="kaku_ui_pv_choices" translatable="false">画面ガ力</string>
+    <string name="kaku_ui_pv_dialog_title" translatable="false">A dialog</string>
+    <string name="kaku_ui_pv_dialog_body" translatable="false">Its text, its border, its corners.</string>
+    <string name="kaku_ui_pv_edit" translatable="false">漢字</string>
+
+    <!-- Export / Import -->
+    <string name="kaku_eim_entry" translatable="false">Export / Import…</string>
+    <string name="kaku_eim_entry_desc" translatable="false">Back up this page, the settings, the OCR data and the dictionary to one .zip, and restore them.</string>
+    <string name="kaku_eim_dir" translatable="false">Export directory</string>
+    <string name="kaku_eim_dir_unset" translatable="false">not set</string>
+    <string name="kaku_eim_title" translatable="false">Export / Import</string>
+    <string name="kaku_eim_desc" translatable="false">Tick what to carry, then export it as a single .zip — or import one and restore just those parts.</string>
+    <string name="kaku_eim_dir_caption" translatable="false">Export directory (tap to choose)</string>
+    <string name="kaku_eim_dir_unset_long" translatable="false">Not set — tap to choose a folder</string>
+    <string name="kaku_eim_warn_nodir" translatable="false">No export directory set.</string>
+    <string name="kaku_eim_warn_none" translatable="false">No export in this directory yet.</string>
+    <string name="kaku_eim_last_checking" translatable="false">Last export: …</string>
+    <string name="kaku_eim_last_line" translatable="false">Last export: %1$s</string>
+    <string name="kaku_eim_select_all" translatable="false">全選択</string>
+    <string name="kaku_eim_cat_ui" translatable="false">白い熊 画 UI (colours · borders · fonts, with the imported fonts)</string>
+    <string name="kaku_eim_cat_settings" translatable="false">Settings (instant mode · image filter · text direction)</string>
+    <string name="kaku_eim_cat_ocr" translatable="false">OCR data (recognition models)</string>
+    <string name="kaku_eim_cat_dictionary" translatable="false">Dictionary data</string>
+    <string name="kaku_eim_export" translatable="false">Export</string>
+    <string name="kaku_eim_import" translatable="false">Import</string>
+    <string name="kaku_eim_cancel" translatable="false">Cancel</string>
+    <string name="kaku_eim_ok" translatable="false">OK</string>
+    <string name="kaku_eim_none_selected" translatable="false">No categories selected.</string>
+    <string name="kaku_eim_export_done_title" translatable="false">Export finished</string>
+    <string name="kaku_eim_export_done_body" translatable="false">Written to:\n%1$s\n\n%2$s · %3$d categories</string>
+    <string name="kaku_eim_export_fail_title" translatable="false">Export failed</string>
+    <string name="kaku_eim_export_fail" translatable="false">Export failed: %1$s</string>
+    <string name="kaku_eim_import_done_title" translatable="false">Import finished</string>
+    <string name="kaku_eim_import_fail_title" translatable="false">Import failed</string>
+    <string name="kaku_eim_import_fail" translatable="false">Import failed: %1$s</string>
+    <string name="kaku_eim_import_none" translatable="false">Not a 白い熊 画 backup.</string>
+    <string name="kaku_eim_import_nothing" translatable="false">Nothing to restore.</string>
+    <string name="kaku_eim_ui_result" translatable="false">%1$d settings, %2$d fonts</string>
+    <string name="kaku_eim_settings_result" translatable="false">%1$d settings</string>
+    <string name="kaku_eim_files_result" translatable="false">%1$d files</string>
+    <string name="kaku_eim_restart_hint" translatable="false">Restart the app to apply everything restored.</string>
+    <string name="kaku_eim_restart_later" translatable="false">Later</string>
+    <string name="kaku_eim_restart_now" translatable="false">Restart now</string>
+
+    <!-- start screen -->
+    <string name="kaku_ui_open" translatable="false">白い熊 画 UI</string>
+</resources>

@@ -1,5 +1,9 @@
 package ca.fuwafuwa.kaku.Windows
 
+import shiroikuma.kaku.DictText
+import shiroikuma.kaku.KakuSkin
+import shiroikuma.kaku.KakuUi
+import android.util.TypedValue
 import android.content.Context
 import android.graphics.Color
 import android.util.Log
@@ -91,14 +95,23 @@ class InstantInfoWindow(context: Context,
         return false
     }
 
+    override fun applySkin()
+    {
+        super.applySkin()
+        textFrame.background = KakuSkin.windowPanel(context)
+        textInfo.setTextColor(KakuUi.i(KakuUi.C_DICT_TEXT))
+        textInfo.typeface = KakuSkin.dictTypeface(context)
+        textInfo.setTextSize(TypedValue.COMPLEX_UNIT_SP, KakuUi.i(KakuUi.DICT_FONT_SIZE).toFloat())
+    }
+
     override fun show()
     {
         synchronized(this)
         {
             if (!addedToWindowManager)
             {
+                refreshSkin()
                 textInfo.text = displayData.text
-                textInfo.setTextColor(Color.BLACK)
 
                 if (isBoxHorizontal)
                 {
@@ -162,7 +175,7 @@ class InstantInfoWindow(context: Context,
         }
         else
         {
-            textInfo.text = "No dictionary entry found"
+            textInfo.text = context.getString(R.string.no_dictionary_entry)
         }
 
         // Highlights words in the window as long as they match
@@ -270,73 +283,9 @@ class InstantInfoWindow(context: Context,
 
     private fun displayResults(jmResults: List<JmSearchResult>)
     {
-        val sb = StringBuilder()
-
-        for ((entry, deinfInfo) in jmResults)
-        {
-            sb.append(entry.kanji)
-
-            if (!entry.readings.isEmpty())
-            {
-                if (DB_JMDICT_NAME == entry.dictionary)
-                {
-                    sb.append(" (")
-                } else
-                {
-                    sb.append(" ")
-                }
-                sb.append(entry.readings)
-                if (DB_JMDICT_NAME == entry.dictionary) sb.append(")")
-            }
-
-            val deinfReason = deinfInfo!!.reason
-            if (deinfReason != null && !deinfReason.isEmpty())
-            {
-                sb.append(String.format(" %s", deinfReason))
-            }
-
-            sb.append("\n")
-            sb.append(getMeaning(entry))
-            sb.append("\n\n")
-        }
-
-        if (sb.length > 2)
-        {
-            sb.setLength(sb.length - 2)
-        }
-
-        textInfo.text = sb.toString()
+        textInfo.text = DictText.build(context, jmResults, 3)
     }
 
-    private fun getMeaning(entry: EntryOptimized): String
-    {
-        val meanings = entry.meanings.split("\ufffc".toRegex()).toTypedArray()
-        val pos = entry.pos.split("\ufffc".toRegex()).toTypedArray()
-
-        val sb = StringBuilder()
-
-        for (i in meanings.indices)
-        {
-            if (i > 2)
-            {
-                sb.append(" [......]")
-                break
-            }
-            if (i != 0)
-            {
-                sb.append(" ")
-            }
-            sb.append(LangUtils.ConvertIntToCircledNum(i + 1))
-            sb.append(" ")
-            if (DB_JMDICT_NAME == entry.dictionary && !pos[i].isEmpty())
-            {
-                sb.append(String.format("(%s) ", pos[i]))
-            }
-            sb.append(meanings[i])
-        }
-
-        return sb.toString()
-    }
 
     private fun setPadding(l: Int, t: Int, r: Int, b: Int)
     {

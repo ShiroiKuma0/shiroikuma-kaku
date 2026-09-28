@@ -4,7 +4,10 @@ import android.app.AlertDialog
 import android.app.Dialog
 import android.content.Context
 import android.content.Intent
+import android.graphics.drawable.InsetDrawable
 import android.os.Bundle
+import android.widget.TextView
+import shiroikuma.kaku.KakuViews
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentActivity
 import ca.fuwafuwa.kaku.KAKU_PREF_FILE
@@ -14,6 +17,23 @@ import ca.fuwafuwa.kaku.R
 
 class GrantPermissionDialogFragment : DialogFragment()
 {
+    /** The house look: bordered black-yellow panel, dialog ink for title, text and buttons. */
+    override fun onStart()
+    {
+        super.onStart()
+        val dialog = dialog as? AlertDialog ?: return
+        val ctx = requireContext()
+        dialog.window?.setBackgroundDrawable(InsetDrawable(KakuViews.panelBackground(ctx), KakuViews.dp(ctx, 16f)))
+        val ink = KakuViews.ink()
+        dialog.findViewById<TextView>(android.R.id.message)?.setTextColor(ink)
+        val titleId = ctx.resources.getIdentifier("alertTitle", "id", "android")
+        if (titleId != 0) dialog.findViewById<TextView>(titleId)?.setTextColor(ink)
+        for (which in intArrayOf(AlertDialog.BUTTON_POSITIVE, AlertDialog.BUTTON_NEGATIVE))
+        {
+            dialog.getButton(which)?.setTextColor(ink)
+        }
+    }
+
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog
     {
         return activity?.let {

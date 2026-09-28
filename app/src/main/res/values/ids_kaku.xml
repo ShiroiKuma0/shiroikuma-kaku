@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- KakuSkin: a view's role when the app screens are painted ("link", "rule"). -->
+    <item name="kaku_skin_role" type="id" />
+</resources>

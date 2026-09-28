@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import shiroikuma.kaku.KakuSkin
 
 /** One tutorial page: a title and its explanation (upstream's screen recordings were dropped). */
 class TutorialFragment : Fragment()
@@ -18,6 +19,7 @@ class TutorialFragment : Fragment()
         root.findViewById<TextView>(R.id.tutorial_title).text = getString(TITLES[pos - 1])
         root.findViewById<TextView>(R.id.tutorial_text).text = getString(TEXTS[pos - 1])
 
+        KakuSkin.applyToTree(root)
         return root
     }
 

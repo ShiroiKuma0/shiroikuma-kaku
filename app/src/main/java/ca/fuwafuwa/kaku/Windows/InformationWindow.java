@@ -16,6 +16,12 @@ import android.view.ViewConfiguration;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.TextSwitcher;
+import android.widget.TextView;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.AbsoluteSizeSpan;
+import android.text.style.ForegroundColorSpan;
+import android.util.TypedValue;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -38,6 +44,9 @@ import ca.fuwafuwa.kaku.Windows.Interfaces.ICopyText;
 import ca.fuwafuwa.kaku.Windows.Interfaces.IRecalculateKanjiViews;
 import ca.fuwafuwa.kaku.Windows.Interfaces.ISearchPerformer;
 import ca.fuwafuwa.kaku.Windows.Views.KanjiGridView;
+import shiroikuma.kaku.KakuSkin;
+import shiroikuma.kaku.KakuUi;
+import shiroikuma.kaku.DictText;
 
 /**
  * Created by 0xbad1d3a5 on 4/23/2016.
@@ -157,6 +166,21 @@ public class InformationWindow extends Window implements Searcher.SearchDictDone
         }
 
         return false;
+    }
+
+    @Override
+    protected void applySkin()
+    {
+        super.applySkin();
+        mInfoWindow.setBackground(KakuSkin.windowPanel(context));
+        for (int i = 0; i < mDictResults.getChildCount(); i++)
+        {
+            TextView tv = (TextView) mDictResults.getChildAt(i);
+            tv.setTextColor(KakuUi.i(KakuUi.C_DICT_TEXT));
+            tv.setTypeface(KakuSkin.dictTypeface(context));
+            tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, KakuUi.i(KakuUi.DICT_FONT_SIZE));
+        }
+        mKanjiGrid.restyle();
     }
 
     @Override
@@ -335,61 +359,6 @@ public class InformationWindow extends Window implements Searcher.SearchDictDone
 
     private void displayResults(List<JmSearchResult> jmResults)
     {
-        StringBuilder sb = new StringBuilder();
-
-        for (JmSearchResult jmSearchResult : jmResults)
-        {
-            sb.append(jmSearchResult.getEntry().getKanji());
-
-            if (!jmSearchResult.getEntry().getReadings().isEmpty()){
-                if (Constants.DB_JMDICT_NAME.equals(jmSearchResult.getEntry().getDictionary()))
-                {
-                    sb.append(" (");
-                }
-                else {
-                    sb.append(" ");
-                }
-                sb.append(jmSearchResult.getEntry().getReadings());
-                if (Constants.DB_JMDICT_NAME.equals(jmSearchResult.getEntry().getDictionary())) sb.append(")");
-            }
-
-            String deinfReason = jmSearchResult.getDeinfInfo().getReason();
-            if (deinfReason != null && !deinfReason.isEmpty()){
-                sb.append(String.format(" %s", deinfReason));
-            }
-
-            sb.append("\n");
-            sb.append(getMeaning(jmSearchResult.getEntry()));
-            sb.append("\n\n");
-        }
-
-        if (sb.length() > 2)
-        {
-            sb.setLength(sb.length() - 2);
-        }
-
-        mDictResults.setText(sb.toString());
-    }
-
-    private String getMeaning(EntryOptimized entry)
-    {
-        String[] meanings = entry.getMeanings().split("\ufffc", -1);
-        String[] pos = entry.getPos().split("\ufffc", -1);
-
-        StringBuilder sb = new StringBuilder();
-
-        for (int i = 0; i < meanings.length; i++){
-            if (i != 0){
-                sb.append(" ");
-            }
-            sb.append(LangUtils.Companion.ConvertIntToCircledNum(i + 1));
-            sb.append(" ");
-            if (Constants.DB_JMDICT_NAME.equals(entry.getDictionary()) && !pos[i].isEmpty()){
-                sb.append(String.format("(%s) ", pos[i]));
-            }
-            sb.append(meanings[i]);
-        }
-
-        return sb.toString();
+        mDictResults.setText(DictText.build(context, jmResults));
     }
 }

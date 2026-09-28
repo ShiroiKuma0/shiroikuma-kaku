@@ -10,7 +10,10 @@ import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import android.widget.ImageView
 import shiroikuma.kaku.KakuFork
+import shiroikuma.kaku.KakuUiActivity
+import shiroikuma.kaku.KakuUi
 import java.util.*
 
 
@@ -50,6 +53,12 @@ class MainStartFragment : Fragment()
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(KakuFork.GITHUB)))
         }
 
+        // The Settings cog opens the 白い熊 画 UI page — on a long-press (the family's gesture) and,
+        // there being no upstream settings page, on a tap as well.
+        val settings = rootView.findViewById<ImageView>(R.id.kaku_settings)
+        settings.setOnClickListener { KakuUiActivity.open(mainActivity) }
+        settings.setOnLongClickListener { KakuUiActivity.open(mainActivity); true }
+
         if (MainService.IsRunning())
         {
             onKakuLoaded()
@@ -82,6 +91,8 @@ class MainStartFragment : Fragment()
     override fun onResume()
     {
         super.onResume()
+
+        rootView.findViewById<ImageView>(R.id.kaku_settings).setColorFilter(KakuUi.i(KakuUi.C_ACCENT))
 
         if (!MainService.IsRunning())
         {

@@ -1,5 +1,6 @@
 package ca.fuwafuwa.kaku
 
+import shiroikuma.kaku.KakuSkin
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -22,6 +23,7 @@ class TutorialEndFragment : Fragment()
             GrantPermissionDialogFragment().show(fragmentManager!!, "GrantPermission")
         }
 
+        KakuSkin.applyToTree(rootView)
         return rootView
     }
 
