@@ -134,6 +134,23 @@
     <string name="kaku_eim_restart_later" translatable="false">Later</string>
     <string name="kaku_eim_restart_now" translatable="false">Restart now</string>
 
+    <!-- 保存復元 automation (sister-app contract v2) -->
+    <string name="kaku_auto_switch" translatable="false">Automation export</string>
+    <string name="kaku_auto_switch_desc" translatable="false">Let sister apps (白い熊 応用管理 · 白い熊 自由作業盤) run this export headlessly and back the data up. On by default.</string>
+    <string name="kaku_auto_require_token" translatable="false">Use authorization token?</string>
+    <string name="kaku_auto_require_token_desc" translatable="false">Off: any sister app may drive the automation. On: a caller must also present the token below. Either way the data door checks the caller’s package name and signature.</string>
+    <string name="kaku_auto_token" translatable="false">Automation token</string>
+    <string name="kaku_auto_token_desc" translatable="false">Tap to copy the full token · paste it into 自由作業盤「保存復元の設定」</string>
+    <string name="kaku_auto_token_copied" translatable="false">Token copied to the clipboard.</string>
+    <string name="kaku_auto_regenerate" translatable="false">Regenerate</string>
+    <string name="kaku_auto_token_regen_title" translatable="false">Regenerate the token?</string>
+    <string name="kaku_auto_token_regen_msg" translatable="false">The old token stops working at once. Every copy already pasted into 白い熊 自由作業盤 must be updated.</string>
+    <string name="kaku_auto_token_regenerated" translatable="false">New token generated — update the pasted copies.</string>
+    <string name="kaku_auto_notif_channel" translatable="false">Automation data</string>
+    <string name="kaku_auto_notif_export" translatable="false">Writing the backup…</string>
+    <string name="kaku_auto_notif_import" translatable="false">Restoring the backup…</string>
+    <string name="kaku_auto_notif_spooling" translatable="false">Reading the backup…</string>
+
     <!-- start screen -->
     <string name="kaku_ui_open" translatable="false">白い熊 画 UI</string>
 </resources>

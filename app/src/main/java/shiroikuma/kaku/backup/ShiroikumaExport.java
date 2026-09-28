@@ -364,7 +364,7 @@ public final class ShiroikumaExport {
                                 for (File f : fonts) {
                                     throwIfCancelled(cancel);
                                     if (f.isFile() && KakuFonts.isFontName(f.getName())) {
-                                        writeFileEntry(zip, FONTS_PREFIX + f.getName(), f);
+                                        writeFileEntry(zip, FONTS_PREFIX + f.getName(), f, cancel);
                                     }
                                 }
                             }
@@ -381,7 +381,7 @@ public final class ShiroikumaExport {
                             writeEntry(zip, "ocr.json", new JSONObject().put("files", names(files)).toString(2));
                             for (File f : files) {
                                 throwIfCancelled(cancel);
-                                writeFileEntry(zip, OCR_PREFIX + f.getName(), f);
+                                writeFileEntry(zip, OCR_PREFIX + f.getName(), f, cancel);
                             }
                             break;
                         }
@@ -390,7 +390,7 @@ public final class ShiroikumaExport {
                             writeEntry(zip, "dictionary.json", new JSONObject().put("files", names(files)).toString(2));
                             for (File f : files) {
                                 throwIfCancelled(cancel);
-                                writeFileEntry(zip, DICT_PREFIX + f.getName(), f);
+                                writeFileEntry(zip, DICT_PREFIX + f.getName(), f, cancel);
                             }
                             break;
                         }
@@ -535,12 +535,20 @@ public final class ShiroikumaExport {
         zip.closeEntry();
     }
 
-    private static void writeFileEntry(ZipOutputStream zip, String name, File file) throws IOException {
+    /**
+     * One file into the archive. The OCR data and the dictionary are tens of megabytes each, so a
+     * cancel is honoured between chunks too, not only between entries.
+     */
+    private static void writeFileEntry(ZipOutputStream zip, String name, File file, @Nullable Cancel cancel)
+            throws IOException {
         zip.putNextEntry(new ZipEntry(name));
         try (InputStream in = new java.io.FileInputStream(file)) {
             byte[] buf = new byte[64 * 1024];
             int n;
-            while ((n = in.read(buf)) > 0) zip.write(buf, 0, n);
+            while ((n = in.read(buf)) > 0) {
+                throwIfCancelled(cancel);
+                zip.write(buf, 0, n);
+            }
         }
         zip.closeEntry();
     }

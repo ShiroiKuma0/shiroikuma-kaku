@@ -1,6 +1,8 @@
 package shiroikuma.kaku;
 
 import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
@@ -34,6 +36,7 @@ import androidx.documentfile.provider.DocumentFile;
 import java.util.Locale;
 
 import ca.fuwafuwa.kaku.R;
+import shiroikuma.kaku.automation.AutomationAuth;
 import shiroikuma.kaku.backup.ShiroikumaExport;
 
 /**
@@ -164,6 +167,40 @@ public class KakuUiActivity extends Activity implements ExportImportPanel.Host {
                     if (!isFinishing() && summary.isAttachedToWindow()) summary.setText(eximportSummary(newest == null ? NONE : newest));
                 });
             }, "kaku-ui-status").start();
+        }
+
+        // The 保存復元 gate (sister-app contract v2 §2), below the Export / Import row: the switch
+        // defaults ON, the token OFF, and the token row shows only while the token is asked for.
+        final Context ctx = this;
+        Switch enabled = toggle(AutomationAuth.isEnabled(ctx), on -> AutomationAuth.setEnabled(ctx, on));
+        itemRow(IND_L1, getString(R.string.kaku_auto_switch), getString(R.string.kaku_auto_switch_desc), enabled,
+                v -> enabled.toggle());
+
+        Switch require = toggle(AutomationAuth.isTokenRequired(ctx), on -> {
+            AutomationAuth.setTokenRequired(ctx, on);
+            rebuild();
+        });
+        itemRow(IND_L1, getString(R.string.kaku_auto_require_token), getString(R.string.kaku_auto_require_token_desc),
+                require, v -> require.toggle());
+
+        if (AutomationAuth.isTokenRequired(ctx)) {
+            View regen = KakuViews.pill(this, getString(R.string.kaku_auto_regenerate), v ->
+                    KakuViews.showConfirm(this, getString(R.string.kaku_auto_token_regen_title),
+                            getString(R.string.kaku_auto_token_regen_msg), getString(R.string.kaku_auto_regenerate),
+                            () -> {
+                                AutomationAuth.regenerateToken(ctx);
+                                KakuViews.toast(ctx, getString(R.string.kaku_auto_token_regenerated));
+                                rebuild();
+                            }));
+            itemRow(IND_L2, getString(R.string.kaku_auto_token),
+                    AutomationAuth.abbreviate(AutomationAuth.token(ctx)) + "\n" + getString(R.string.kaku_auto_token_desc),
+                    regen, v -> {
+                        ClipboardManager cb = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                        if (cb != null) {
+                            cb.setPrimaryClip(ClipData.newPlainText("automation_token", AutomationAuth.token(ctx)));
+                            KakuViews.toast(ctx, getString(R.string.kaku_auto_token_copied));
+                        }
+                    });
         }
     }
 
@@ -499,7 +536,6 @@ public class KakuUiActivity extends Activity implements ExportImportPanel.Host {
         void on(boolean value);
     }
 
-    @SuppressWarnings("unused")
     private Switch toggle(boolean value, OnToggle onToggle) {
         Switch s = new Switch(this);
         s.setChecked(value);

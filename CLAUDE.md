@@ -98,6 +98,21 @@ All in `app/src/main/java/shiroikuma/kaku/` (ported from shiroikuma-doksho's kit
   replaces data files atomically. Dialog chain: export success OK / import 「Later」 close info +
   panel + page; 「Restart now」 restarts; failures leave the panel open.
 
+- **`automation/*`** — the 保存復元 contract v2 (from
+  `~/git/shiroikuma-jiyusagyoban/sister-app-contract-backup-automation-hand-off.md`, revision
+  2026-09-05 08:19), ported from shiroikuma-doksho's Java set: `StateExportReceiver`
+  (`shiroikuma.kaku.action.EXPORT_STATE` / `LIST_CATEGORIES` / `CANCEL_EXPORT`), `AutomationProvider`
+  (`shiroikuma.kaku.automation`: describe / export / import / cancel, callers pinned by package, uid
+  and certificate in `AutomationCallers`), `AutomationDataService` (dataSync foreground service, partial
+  wakelock), `AutomationAuth` (prefs `shiroikuma_automation`, never exported; switch ON, token OFF,
+  every write `commit()`), `AutomationProgress` (§3, 区分 counts + 20 s heartbeat), `AutomationJobs`,
+  `AutomationForeground`. **Difference from doksho:** the §1 export runs in `AutomationDataService`,
+  not in the receiver's `goAsync()` — the archive carries the OCR data and the dictionary (tens of
+  MB), too long for a broadcast window. The app does not declare `MANAGE_EXTERNAL_STORAGE`: a `path`
+  extra is ignored when the SAF directory is set, else `ERROR:no-storage-access`. The three rows
+  (switch · token switch · token) sit in the UI page's Export / Import section. No preference this
+  app restores is security-relevant; `requires_permissions` is `[]` (own prefs and files only).
+
 ## Hard rules of this app
 
 - **No network.** No `INTERNET` permission, no downloads, no analytics, no ads, no Google Play

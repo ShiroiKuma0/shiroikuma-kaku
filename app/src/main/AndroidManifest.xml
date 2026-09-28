@@ -6,6 +6,17 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- 保存復元 automation (sister-app contract v2): the job service, and the CPU kept awake under
+         a long export (EMUI otherwise dozes it with the screen off). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- Without these the automation replies' setPackage() fails silently on Android 11+ — BOTH
+         callers (応用管理 restores, 自由作業盤 runs the 保存復元 batch). -->
+    <queries>
+        <package android:name="shiroikuma.oyokanri" />
+        <package android:name="shiroikuma.jiyusagyoban" />
+    </queries>
 
     <!-- 白い熊 画 never touches the network: keep any library from merging these back in. -->
     <uses-permission android:name="android.permission.INTERNET" tools:node="remove" />
@@ -79,6 +90,37 @@
             android:noHistory="true"
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
             android:exported="false" />
+
+        <!-- §1: the unauthenticated half of the surface — writes where it is told to, reports what
+             it did. No android:permission by design (the caller cannot hold one). -->
+        <receiver
+            android:name="shiroikuma.kaku.automation.StateExportReceiver"
+            android:exported="true"
+            tools:ignore="ExportedReceiver">
+            <intent-filter>
+                <action android:name="${applicationId}.action.EXPORT_STATE" />
+                <action android:name="${applicationId}.action.LIST_CATEGORIES" />
+                <action android:name="${applicationId}.action.CANCEL_EXPORT" />
+            </intent-filter>
+        </receiver>
+
+        <!-- §2a: the data door — describe / export / import / cancel for a verified caller. -->
+        <provider
+            android:name="shiroikuma.kaku.automation.AutomationProvider"
+            android:authorities="${applicationId}.automation"
+            android:exported="true"
+            tools:ignore="ExportedContentProvider" />
+
+        <!-- Where every automation job runs (§1 state exports and §2a data-door jobs). -->
+        <service
+            android:name="shiroikuma.kaku.automation.AutomationDataService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+        <!-- Capability discovery, readable without waking the app (integers — read with getInt). -->
+        <meta-data android:name="shiroikuma.automation.contract" android:value="2" />
+        <meta-data android:name="shiroikuma.automation.format" android:value="1" />
+        <meta-data android:name="shiroikuma.automation.min_format" android:value="1" />
 
         <service
             android:name=".MainService"
