@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The running notification's expanded view: the state line and all four actions (Android's own
+     action row shows at most three). Colours come from the notification text styles, so it reads
+     on light and dark shades alike. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/notif_state"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.Compat.Notification" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/notif_camera"
+            style="@style/KakuNotificationButton"
+            android:text="@string/notification_camera" />
+
+        <TextView
+            android:id="@+id/notif_instant"
+            style="@style/KakuNotificationButton"
+            android:text="@string/notification_instant_mode" />
+
+        <TextView
+            android:id="@+id/notif_filter"
+            style="@style/KakuNotificationButton"
+            android:text="@string/notification_image_filter" />
+
+        <TextView
+            android:id="@+id/notif_shutdown"
+            style="@style/KakuNotificationButton"
+            android:text="@string/notification_shutdown" />
+    </LinearLayout>
+</LinearLayout>

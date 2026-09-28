@@ -461,16 +461,24 @@ public class MainService extends Service implements Stoppable {
         Notification n;
         if (prefs.getShowHideSetting())
         {
+            String state = getString(R.string.notification_state,
+                    getString(prefs.getInstantModeSetting() ? R.string.on : R.string.off),
+                    getString(prefs.getImageFilterSetting() ? R.string.on : R.string.off));
+            // Four actions — Camera, Instant mode, Image filter, Shut down — in the expanded view's own
+            // row: Android's action row shows at most three.
+            android.widget.RemoteViews expanded = new android.widget.RemoteViews(getPackageName(), R.layout.notification_kaku_expanded);
+            expanded.setTextViewText(R.id.notif_state, state);
+            expanded.setOnClickPendingIntent(R.id.notif_camera, openCamera);
+            expanded.setOnClickPendingIntent(R.id.notif_instant, toggleInstantMode);
+            expanded.setOnClickPendingIntent(R.id.notif_filter, toggleImagePreview);
+            expanded.setOnClickPendingIntent(R.id.notif_shutdown, closeMainService);
             n = new NotificationCompat.Builder(this, channelId)
                     .setSmallIcon(R.drawable.kaku_notification_icon)
                     .setContentTitle(contentTitle)
-                    .setContentText(getString(R.string.notification_state,
-                            getString(prefs.getInstantModeSetting() ? R.string.on : R.string.off),
-                            getString(prefs.getImageFilterSetting() ? R.string.on : R.string.off)))
+                    .setContentText(state)
                     .setContentIntent(toggleShowHide)
-                    .addAction(0, getString(R.string.notification_camera), openCamera)
-                    .addAction(0, getString(R.string.notification_instant_mode), toggleInstantMode)
-                    .addAction(0, getString(R.string.notification_shutdown), closeMainService)
+                    .setStyle(new NotificationCompat.DecoratedCustomViewStyle())
+                    .setCustomBigContentView(expanded)
                     .build();
         }
         else {
