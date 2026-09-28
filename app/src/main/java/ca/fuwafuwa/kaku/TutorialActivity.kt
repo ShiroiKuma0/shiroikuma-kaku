@@ -6,17 +6,18 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentStatePagerAdapter
 import ca.fuwafuwa.kaku.databinding.ActivityTutorialBinding
+import shiroikuma.kaku.applySystemBarPadding
 
 class TutorialActivity : AppCompatActivity()
 {
-    inner class SectionsPagerAdapter(fm: FragmentManager) : FragmentStatePagerAdapter(fm)
+    inner class SectionsPagerAdapter(fm: FragmentManager) : FragmentStatePagerAdapter(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT)
     {
         override fun getItem(position: Int): Fragment
         {
             if (position == 0){
                 return TutorialWelcomeFragment.newInstance()
             }
-            if (position in 1..9)
+            if (position in 1..TutorialFragment.PAGES)
             {
                 return TutorialFragment.newInstance(position)
             }
@@ -26,7 +27,7 @@ class TutorialActivity : AppCompatActivity()
 
         override fun getCount(): Int
         {
-            return 11
+            return TutorialFragment.PAGES + 2
         }
     }
 
@@ -40,6 +41,7 @@ class TutorialActivity : AppCompatActivity()
 
         supportActionBar?.hide()
         setContentView(mBinding.root)
+        applySystemBarPadding(this)
 
         mSectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager)
         mBinding.container.adapter = mSectionsPagerAdapter

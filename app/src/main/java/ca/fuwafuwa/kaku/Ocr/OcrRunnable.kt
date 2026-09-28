@@ -49,7 +49,13 @@ class OcrRunnable(context: Context, private var mCaptureWindow: CaptureWindow?) 
     {
         mTessBaseAPI = TessBaseAPI()
         val storagePath = mContext.filesDir.absolutePath
-        mTessBaseAPI!!.init(storagePath, "jpn")
+        // Tesseract 5: the legacy engine gives per-character alternatives for the kanji-choice
+        // window, as tess-two (Tesseract 3) did; fall back to the default engine if it is missing.
+        if (!mTessBaseAPI!!.init(storagePath, "jpn", TessBaseAPI.OEM_TESSERACT_ONLY))
+        {
+            Log.w(TAG, "Legacy Tesseract engine unavailable, using the default engine")
+            mTessBaseAPI!!.init(storagePath, "jpn")
+        }
 
         mTessReady = true
 
@@ -82,8 +88,9 @@ class OcrRunnable(context: Context, private var mCaptureWindow: CaptureWindow?) 
 
                     when (mOcrParams!!.textDirection)
                     {
-                        TextDirection.HORIZONTAL -> mTessBaseAPI!!.pageSegMode = TessBaseAPI.PageSegMode.PSM_SINGLE_BLOCK
                         TextDirection.VERTICAL -> mTessBaseAPI!!.pageSegMode = TessBaseAPI.PageSegMode.PSM_SINGLE_BLOCK_VERT_TEXT
+                        // AUTO is resolved to a direction by CaptureWindow before it gets here.
+                        TextDirection.HORIZONTAL, TextDirection.AUTO -> mTessBaseAPI!!.pageSegMode = TessBaseAPI.PageSegMode.PSM_SINGLE_BLOCK
                     }
 
                     saveBitmap(mOcrParams!!.bitmap)

@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="shiroikuma/icon/kaku-icon-512.png" width="120" alt="白い熊 画 icon" />
+
 # 白い熊 画
 
 **Japanese OCR popup dictionary — point a capture box at any app, read the Japanese under it.**

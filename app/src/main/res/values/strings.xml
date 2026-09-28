@@ -1,80 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Kaku</string>
-    <string name="support_text">"Like Kaku? Rate the app!"</string>
-    <string name="kaku_loading">Kaku is loading…</string>
-    <string name="beta_screen">"Thanks for installing the beta version of Kaku! If you didn't intend to install the beta version, I highly recommend that you go to the Play Store and leave the beta program - the beta version of Kaku may be unstable and more prone to bugs. If you are not in the beta program and but still seeing this message, please let me know right away by e-mailing me below!
+    <string name="app_name">白い熊 画</string>
+    <string name="kaku_loading">白い熊 画 is loading…</string>
+    <string name="kaku_running">白い熊 画 is running.</string>
 
-If you run into issues (i.e., constant crashes or graphical glitches) in the beta, please let me know at 0xbad1d3a5@gmail.com! Feedback and suggestions are also welcome!
+    <!-- Start screen -->
+    <string name="start_title">Japanese OCR dictionary</string>
+    <string name="start_tutorial">Tap here to view the tutorial</string>
+    <string name="start_github">白い熊 画 on GitHub</string>
 
-BETA UPDATES:
+    <!-- Service / notification -->
+    <string name="service_starting">Starting the capture window…</string>
+    <string name="notification_channel_name">白い熊 画 capture service</string>
+    <string name="notification_direction_auto">白い熊 画 is determining the text direction automatically</string>
+    <string name="notification_direction_vertical">白い熊 画 is reading text vertically</string>
+    <string name="notification_direction_horizontal">白い熊 画 is reading text horizontally</string>
+    <string name="notification_state">Instant mode %1$s, black and white filter %2$s</string>
+    <string name="notification_instant_mode">Instant mode</string>
+    <string name="notification_image_filter">Image filter</string>
+    <string name="notification_shutdown">Shut down</string>
+    <string name="notification_hidden">白い熊 画 is hidden and in power-saving mode</string>
+    <string name="on">on</string>
+    <string name="off">off</string>
 
-vLATEST
-- Revert Tesseract library update as that was causing vertical OCR recognition issues
-- Fresh build from clone
+    <!-- Permissions -->
+    <string name="relaunch_after_permission">Relaunch 白い熊 画 after granting the permission.</string>
+    <string name="unable_to_start_service">Unable to start the 白い熊 画 service.</string>
+    <string name="manually_check_permission">Manually %1$s.\n白い熊 画 might not work on this device.</string>
+    <string name="capture_consent_declined">Screen capture was not allowed — 白い熊 画 cannot read the screen until it is.</string>
+    <string name="unable_to_setup_database">Unable to set up the 白い熊 画 dictionary.</string>
+    <string name="grant_title">Grant 白い熊 画 permissions</string>
+    <string name="grant_text">白い熊 画 uses optical character recognition (OCR) to read text from images, and works by taking screenshots of your screen while it is active. After granting the permissions, please restart 白い熊 画.\n\n白い熊 画 works completely offline: it has no network access at all and never transmits any data.</string>
+    <string name="grant_ok">Grant</string>
 
-v1.3.72
-- Emergency fix for Android 12
-- Update Tesseract libraries
+    <!-- Tutorial -->
+    <string name="tutorial_label">白い熊 画 tutorial</string>
+    <string name="tut_welcome_title">Welcome to 白い熊 画!</string>
+    <string name="tut_welcome_text">Please take the next few minutes to read through the tutorial and familiarise yourself with 白い熊 画.\n\nTo begin, slide right.</string>
+    <string name="tut_end_title">Enjoy 白い熊 画!</string>
+    <string name="tut_end_text">Good luck on your Japanese journey.</string>
+    <string name="tut_end_start">Start 白い熊 画</string>
 
-v1.3.66
-- Stop screen capture when device is put to sleep
-- Minor bugfixes
-
-v1.3.62
-- Updating beta version of Kaku will longer remove the icon from the home screen after this update
-- Improve artist text
-
-v1.3.59
-- Temporarily disable ads
-
-v1.3.56
-- Minor bugfixes
-- Added dialog in tutorial explaining Kaku's permissions
-
-v1.3.55
-- No Kaku updates, just backend changes
-- Bump Kotlin version, use Triple-T for automated Play Console uploads
-
-v1.3.47
-- Fix minor crashes in Kaku
-
-v1.3.46
-- Improve recognition of commonly mis-recognized kana such as ー or 一
-- Improved normal mode so that the entire sentence can be copied, tap the sides of the normal mode window to scroll
-
-v1.3.45
-- Improve recognition of commonly mis-recognized kana such as く or し
-
-v1.3.43
-- Add similar kana to swap quick text action in case that OCR engine doesn't give that recommendation
-
-v1.3.42
-- Reduce size of tutorial videos
-
-v1.3.40
-- Revamped tutorial and shows on first start of the app
-- Fix minor bugs
-
-v1.3.38
-- Fixed entry ranking issue with dictionary - less common readings of a kanji will rank lower.
-- Fixed icon placement bug with select-to-swap actions in certain cases when the status bar / navigation bar is showing.
-
-v1.3.37
-- Removed history window. Not ready for prime time and I didn't particularly find it useful.
-- Added ability to completely hide Kaku's capture window through the notification.
-
-v1.3.34
-- Added history window. This window shows previous kanji that you have looked up.
-- You can now share text to Kaku to trigger the popup window as well.
-
-v1.3.33
-- One ad added to start screen. Sorry! But it's to help support development. It should be fairly out of the way, but let me know if it causes problems.
-- Adding the ad does get rid of the 'Close Capture Window' button, but a reminder to all that you can close Kaku by simply tapping on Kaku's notification in the status bar. If you are unable to close Kaku because the notification is missing, please send me an e-mail!
-- Fixed instant mode rotation bug where positioning was incorrect after device rotation.
-- Fixed bug where Kaku does not start on some devices (particularly Xiaomi devices).
-
-v1.3.32
-- Instant Mode window positioning logic has been implemented. If things look off here, please let me know!
-
-Note that if you try to leave feedback on the Play Store as a beta user, it is not shown to all users."</string>
+    <string name="tut_title_1">Basic usage</string>
+    <string name="tut_text_1">Drag the capture window to move it. Drag its bottom-right corner to resize it — the resize area is inside the capture window. Double-tap it to start OCR and recognise the text under it.</string>
+    <string name="tut_title_2">Instant mode</string>
+    <string name="tut_text_2">If instant mode is on and the capture window is fairly small, OCR starts immediately. This mode is meant for recognising words, not sentences.</string>
+    <string name="tut_title_3">Quick image action — filter</string>
+    <string name="tut_text_3">If the background of the text you want to recognise is translucent, adjust the image filter: long-press the capture window, then drag left or right. The image filter must be turned on.</string>
+    <string name="tut_title_4">Quick text action — swap</string>
+    <string name="tut_text_4">Sometimes a kanji is misrecognised but is easy to correct: swipe quickly downward on it to see possible alternative recognitions.</string>
+    <string name="tut_title_5">Quick text action — edit</string>
+    <string name="tut_text_5">If the correct kanji is not among the alternatives, swipe quickly to the upper left to enter it by hand. Manual correction needs a keyboard with Japanese handwriting input.</string>
+    <string name="tut_title_6">Quick text action — delete</string>
+    <string name="tut_text_6">To delete an extraneous character, swipe to the upper right. For all text quick actions, the swipe direction may be reversed in instant mode when there is not enough screen space.</string>
+    <string name="tut_title_7">Copy to the clipboard</string>
+    <string name="tut_text_7">Tap and hold any character to copy the recognised text to the clipboard.</string>
+    <string name="tut_title_8">Notification controls</string>
+    <string name="tut_text_8">Show or hide 白い熊 画, or change its settings, from its notification.</string>
+    <string name="tut_title_9">Select to look up</string>
+    <string name="tut_text_9">If you can select the text and don\'t need OCR, select it and send it to 白い熊 画 (share, or the text-selection menu) to open the dictionary.</string>
 </resources>

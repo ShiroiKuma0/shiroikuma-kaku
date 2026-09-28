@@ -75,13 +75,13 @@ class InstantInfoWindow(context: Context,
         }
     }
 
-    override fun onDown(e: MotionEvent?): Boolean
+    override fun onDown(e: MotionEvent): Boolean
     {
         instantKanjiWindow.hide()
         return super.onDown(e)
     }
 
-    override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean
+    override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean
     {
         return false
     }

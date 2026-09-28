@@ -187,7 +187,7 @@ class InstantKanjiWindow(context: Context,
         return false
     }
 
-    override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean
+    override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean
     {
         return false
     }

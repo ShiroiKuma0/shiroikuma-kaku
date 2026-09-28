@@ -122,7 +122,7 @@ fun setupKakuDatabasesAndFiles(context: Context)
     }
     catch (e: Exception)
     {
-        Toast.makeText(context, "Unable to setup Kaku database", Toast.LENGTH_LONG).show()
+        Toast.makeText(context, context.getString(R.string.unable_to_setup_database), Toast.LENGTH_LONG).show()
         return
     }
 }
@@ -154,7 +154,7 @@ fun copyFilesIfNotExists(context: Context, filesAndPaths: Map<String, String>)
 
         if (File(filePath).exists())
         {
-            return
+            continue
         }
 
         createDirIfNotExists(path)
@@ -180,7 +180,7 @@ fun deleteScreenshotsOlderThanOneDay(path: String)
             var purgeTime = System.currentTimeMillis() - 1 * 24 * 60 * 60 * 1000
             for (fileName in listFileNames)
             {
-                val file = File(fileName)
+                val file = File(dir, fileName)
                 if (file.isFile && file.lastModified() < purgeTime)
                 {
                     file.delete()

@@ -40,6 +40,7 @@ Tesseract as fallback) instead of Tesseract 3; then **Yomitan dictionaries** ins
 | App label | `白い熊 画` | `res/values/strings.xml` `app_name` |
 | Our settings page | **`白い熊 画 UI`** — every configurable item of the fork; opened by a **long-press on the Settings cog** of the main screen | (to be built) |
 | File prefix | `shiroikuma-kaku_` — APKs `shiroikuma-kaku_<ver>+NNN_arm64-v8a.apk`, exports `shiroikuma-kaku_<yyyy-MM-dd_HH-mm-ss>.zip` | |
+| Launcher icon | Kaku's 画 tile traced in the house style: the tile as a yellow rounded outline, 画 solid yellow, on black (the `tile` variant, confirmed by 白い熊 2026-09-28); the notification icon is 画 alone | `shiroikuma/icon/trace-icon.py` → `kaku-icon.svg` / `kaku-notification.svg` → `gen-icons.py` writes every icon resource in `app/src/main/res` |
 | Keystore | `~/.android-keystores/shiroikuma-kaku.jks`, alias `kaku` | `keystore.properties` (gitignored) |
 | Licence | Fork: GPL-3.0 (`LICENSE`); upstream's BSD-3 notice kept in `LICENSE-Kaku-BSD-3` | |
 
@@ -62,6 +63,12 @@ Upstream is dead, so we edit its files freely; still keep our own code recognisa
 
 - `shiroikuma/` — `fork.gradle` (app id, signing, version, `buildFork`; applied by the last line of
   `app/build.gradle`), `fork.properties` (version + counter), `icon/` (icon tracing pipeline).
+- `app/src/main/java/shiroikuma/kaku/` — `KakuFork` (name, GitHub links), `ProjectionConsentActivity`
+  (fresh screen-capture consent once Android 14 has spent the previous one), `Insets.kt`
+  (edge-to-edge padding for targetSdk 35).
+- Toolchain: AGP 8.13, Gradle 8.14, Kotlin 2.2, JDK 17 bytecode, compile/targetSdk 35, minSdk 24;
+  OCR on Tesseract 5 via Tesseract4Android (jitpack), initialised with the legacy engine
+  (`OEM_TESSERACT_ONLY`) so the kanji-choice window keeps per-character alternatives.
 - New fork code lives under `app/src/main/java/shiroikuma/kaku/`.
 
 ## Hard rules of this app

@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.ServiceInfo;
 import android.content.res.Configuration;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
@@ -24,6 +25,8 @@ import android.os.Handler;
 import android.os.IBinder;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.ServiceCompat;
+import androidx.core.content.ContextCompat;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
@@ -33,6 +36,7 @@ import android.widget.Toast;
 import ca.fuwafuwa.kaku.Interfaces.Stoppable;
 import ca.fuwafuwa.kaku.Windows.Window;
 import ca.fuwafuwa.kaku.Windows.WindowCoordinator;
+import shiroikuma.kaku.ProjectionConsentActivity;
 
 import static androidx.core.app.NotificationCompat.FLAG_FOREGROUND_SERVICE;
 import static androidx.core.app.NotificationCompat.FLAG_ONGOING_EVENT;
@@ -128,10 +132,14 @@ public class MainService extends Service implements Stoppable {
                     if (MediaProjectionStopCallback.this == mMediaProjectionStopCallback){
                         if (mVirtualDisplay != null){
                             mVirtualDisplay.release();
+                            mVirtualDisplay = null;
                         }
                         mMediaProjection.unregisterCallback(MediaProjectionStopCallback.this);
                         mMediaProjection = null;
-                        mImageReader.close();
+                        if (mImageReader != null){
+                            mImageReader.close();
+                            mImageReader = null;
+                        }
                     }
                 }
             });
@@ -148,6 +156,9 @@ public class MainService extends Service implements Stoppable {
 
     private Intent mProjectionResultIntent;
     private int mProjectionResultCode;
+    // A screen-capture consent is single-use from Android 14 on: once getMediaProjection() has
+    // consumed it, a new projection needs a new consent (ProjectionConsentActivity).
+    private boolean mProjectionTokenUsed = false;
 
     private WindowManager mWindowManager;
     private MediaProjectionManager mMediaProjectionManager;
@@ -159,6 +170,21 @@ public class MainService extends Service implements Stoppable {
 
     private int mRotation;
     private Point mRealDisplaySize = new Point();
+    private DisplayManager mDisplayManager;
+    // Rotation alone misses changes on the Mate XT (unfolding, and rotations the service is not
+    // told about as a rotation): react to any change of the default display's size too.
+    private final DisplayManager.DisplayListener mDisplayListener = new DisplayManager.DisplayListener()
+    {
+        @Override public void onDisplayAdded(int displayId) {}
+        @Override public void onDisplayRemoved(int displayId) {}
+        @Override public void onDisplayChanged(int displayId)
+        {
+            if (displayId == Display.DEFAULT_DISPLAY)
+            {
+                onDisplayGeometryMaybeChanged();
+            }
+        }
+    };
 
     private MediaProjectionStopCallback mMediaProjectionStopCallback;
     private WindowCoordinator mWindowCoordinator = new WindowCoordinator(this);
@@ -182,19 +208,19 @@ public class MainService extends Service implements Stoppable {
         }
 
         Log.d(TAG, "CREATING MAINSERVICE: " + System.identityHashCode(this));
-        Toast.makeText(this, "Starting capture window...", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, getString(R.string.service_starting), Toast.LENGTH_LONG).show();
 
         mMediaProjectionManager = (MediaProjectionManager) getSystemService(MEDIA_PROJECTION_SERVICE);
+        mDisplayManager = (DisplayManager) getSystemService(DISPLAY_SERVICE);
+        mDisplayManager.registerDisplayListener(mDisplayListener, mHandler);
         mHandler = new MainServiceHandler(this, mWindowCoordinator);
 
-        // Set preferences for ratings
-        SharedPreferences prefs = getSharedPreferences(Constants.KAKU_PREF_FILE, Context.MODE_PRIVATE);
-        int timesLaunched = prefs.getInt(Constants.KAKU_PREF_TIMES_LAUNCHED, 1);
-        prefs.edit().putInt(Constants.KAKU_PREF_TIMES_LAUNCHED, timesLaunched + 1).apply();
+        ContextCompat.registerReceiver(this, mScreenOffReceiver, mIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED);
 
-        registerReceiver(mScreenOffReceiver, mIntentFilter);
-
-        startForeground(NOTIFICATION_ID, getNotification());
+        // The service only starts after MainActivity (or ProjectionConsentActivity) obtained the
+        // screen-capture consent, as Android 14 requires for a mediaProjection-typed service.
+        ServiceCompat.startForeground(this, NOTIFICATION_ID, getNotification(),
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ? ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION : 0);
         isKakuRunning = true;
     }
 
@@ -209,6 +235,7 @@ public class MainService extends Service implements Stoppable {
         {
             mProjectionResultIntent = (Intent) intent.getExtras().get(Constants.EXTRA_PROJECTION_RESULT_INTENT);
             mProjectionResultCode = intent.getExtras().getInt(Constants.EXTRA_PROJECTION_RESULT_CODE);
+            mProjectionTokenUsed = false;
         }
 
         // Determine if we need to start/stop the capture service
@@ -236,18 +263,38 @@ public class MainService extends Service implements Stoppable {
     public void onConfigurationChanged(Configuration newConfig)
     {
         super.onConfigurationChanged(newConfig);
+        onDisplayGeometryMaybeChanged();
+    }
 
-        if (mWindowCoordinator.hasWindow(Constants.WINDOW_CAPTURE))
+    /**
+     * Re-fit the capture surface and every window when the screen's rotation or size changed
+     * (rotation, fold / unfold).
+     */
+    private void onDisplayGeometryMaybeChanged()
+    {
+        if (mWindowCoordinator == null || !mWindowCoordinator.hasWindow(Constants.WINDOW_CAPTURE))
         {
-            final int rotation = mDisplay.getRotation();
+            return;
+        }
 
-            if (rotation != mRotation)
+        Display display = mDisplayManager.getDisplay(Display.DEFAULT_DISPLAY);
+        Point size = new Point();
+        display.getRealSize(size);
+        final int rotation = display.getRotation();
+
+        if (rotation != mRotation || !size.equals(mRealDisplaySize))
+        {
+            Log.d(TAG, String.format("Display changed: rotation %d, %dx%d", rotation, size.x, size.y));
+            mRotation = rotation;
+            if (mMediaProjection != null)
             {
-                Log.d(TAG, "Orientation changed");
-                mRotation = rotation;
                 createVirtualDisplay();
-                mWindowCoordinator.reinitAllWindows();
             }
+            else
+            {
+                mRealDisplaySize.set(size.x, size.y);
+            }
+            mWindowCoordinator.reinitAllWindows();
         }
     }
 
@@ -255,6 +302,7 @@ public class MainService extends Service implements Stoppable {
     public void onDestroy()
     {
         unregisterReceiver(mScreenOffReceiver);
+        mDisplayManager.unregisterDisplayListener(mDisplayListener);
         stopForeground(true);
         Log.d(TAG, "DESTORYING MAINSERVICE: " + System.identityHashCode(this));
 
@@ -291,7 +339,14 @@ public class MainService extends Service implements Stoppable {
     {
         if (mMediaProjection == null){
             Log.d(TAG, "mMediaProjection is null");
+            if (mProjectionResultIntent == null || (mProjectionTokenUsed && Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE)){
+                // The consent was spent (screen turned off, or the system stopped the projection):
+                // ask again; its result restarts this service with a fresh token.
+                ProjectionConsentActivity.request(this);
+                return;
+            }
             mMediaProjection = mMediaProjectionManager.getMediaProjection(mProjectionResultCode, mProjectionResultIntent);
+            mProjectionTokenUsed = true;
             mMediaProjectionStopCallback = new MediaProjectionStopCallback();
             mMediaProjection.registerCallback(mMediaProjectionStopCallback, mHandler);
         }
@@ -332,17 +387,17 @@ public class MainService extends Service implements Stoppable {
 
         Prefs prefs = KakuTools.getPrefs(this);
 
-        String contentTitle = "Kaku";
+        String contentTitle = getString(R.string.app_name);
         switch (prefs.getTextDirectionSetting())
         {
             case AUTO:
-                contentTitle = "Kaku is determining text direction automatically";
+                contentTitle = getString(R.string.notification_direction_auto);
                 break;
             case VERTICAL:
-                contentTitle = "Kaku is reading text vertically";
+                contentTitle = getString(R.string.notification_direction_vertical);
                 break;
             case HORIZONTAL:
-                contentTitle = "Kaku is reading text horizontally";
+                contentTitle = getString(R.string.notification_direction_horizontal);
                 break;
         }
 
@@ -352,17 +407,19 @@ public class MainService extends Service implements Stoppable {
             n = new NotificationCompat.Builder(this, channelId)
                     .setSmallIcon(R.drawable.kaku_notification_icon)
                     .setContentTitle(contentTitle)
-                    .setContentText(String.format("Instant mode %s, black and white filter %s", prefs.getInstantModeSetting() ? "on" : "off", prefs.getImageFilterSetting() ? "on" : "off"))
+                    .setContentText(getString(R.string.notification_state,
+                            getString(prefs.getInstantModeSetting() ? R.string.on : R.string.off),
+                            getString(prefs.getImageFilterSetting() ? R.string.on : R.string.off)))
                     .setContentIntent(toggleShowHide)
-                    .addAction(0, "Instant Mode", toggleInstantMode)
-                    .addAction(0, "Image Filter", toggleImagePreview)
-                    .addAction(0, "Shutdown", closeMainService)
+                    .addAction(0, getString(R.string.notification_instant_mode), toggleInstantMode)
+                    .addAction(0, getString(R.string.notification_image_filter), toggleImagePreview)
+                    .addAction(0, getString(R.string.notification_shutdown), closeMainService)
                     .build();
         }
         else {
             n = new NotificationCompat.Builder(this, channelId)
                     .setSmallIcon(R.drawable.kaku_notification_icon)
-                    .setContentTitle("Kaku is hidden and in power-saving mode")
+                    .setContentTitle(getString(R.string.notification_hidden))
                     .setContentIntent(toggleShowHide)
                     .build();
         }
@@ -378,25 +435,35 @@ public class MainService extends Service implements Stoppable {
         mWindowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         DisplayMetrics metrics = getResources().getDisplayMetrics();
         int mDensity = metrics.densityDpi;
-        mDisplay = mWindowManager.getDefaultDisplay();
+        mDisplay = mDisplayManager.getDisplay(Display.DEFAULT_DISPLAY);
 
         // get width and height
         mDisplay.getRealSize(mRealDisplaySize);
+        mRotation = mDisplay.getRotation();
 
         // start capture reader
         Log.d(TAG, String.format("Starting Projection: %dx%d", mRealDisplaySize.x, mRealDisplaySize.y));
+        ImageReader oldReader = mImageReader;
+        mImageReader = ImageReader.newInstance(mRealDisplaySize.x, mRealDisplaySize.y, PixelFormat.RGBA_8888, 2);
         if (mVirtualDisplay != null){
-            mVirtualDisplay.release();
+            // Android 14 allows one virtual display per projection: resize it (rotation, fold)
+            // instead of creating a second one.
+            mVirtualDisplay.resize(mRealDisplaySize.x, mRealDisplaySize.y, mDensity);
+            mVirtualDisplay.setSurface(mImageReader.getSurface());
         }
-        mImageReader = ImageReader.newInstance(mRealDisplaySize.x, mRealDisplaySize.y, PixelFormat.RGBA_8888, 2); // TODO: Something causing a NRE here
-        mVirtualDisplay = mMediaProjection.createVirtualDisplay(getClass().getName(), mRealDisplaySize.x, mRealDisplaySize.y, mDensity, VIRTUAL_DISPLAY_FLAGS, mImageReader.getSurface(), null, mHandler);
+        else {
+            mVirtualDisplay = mMediaProjection.createVirtualDisplay(getClass().getName(), mRealDisplaySize.x, mRealDisplaySize.y, mDensity, VIRTUAL_DISPLAY_FLAGS, mImageReader.getSurface(), null, mHandler);
+        }
+        if (oldReader != null){
+            oldReader.close();
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
     private String createNotificationChannel()
     {
         String channelId = Constants.KAKU_CHANNEL_ID;
-        String channelName = Constants.KAKU_CHANNEL_NAME;
+        String channelName = getString(R.string.notification_channel_name);
 
         NotificationChannel channel = new NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_LOW);
         NotificationManager service = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);

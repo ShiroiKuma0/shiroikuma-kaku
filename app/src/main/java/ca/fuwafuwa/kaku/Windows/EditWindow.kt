@@ -38,7 +38,7 @@ class EditWindow(context: Context, windowCoordinator: WindowCoordinator) : Windo
         return false
     }
 
-    override fun onScroll(e1: MotionEvent, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean
+    override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean
     {
         return false
     }
@@ -90,7 +90,7 @@ class EditWindow(context: Context, windowCoordinator: WindowCoordinator) : Windo
             val pos = squareChar.bitmapPos
 
             var orig = displayData.bitmap
-            orig = orig.copy(orig.config, true)
+            orig = orig.copy(orig.config ?: Bitmap.Config.ARGB_8888, true)
 
             var width = pos[2] - pos[0]
             var height = pos[3] - pos[1]

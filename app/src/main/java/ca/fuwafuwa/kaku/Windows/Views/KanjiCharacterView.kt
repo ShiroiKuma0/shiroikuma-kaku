@@ -198,7 +198,7 @@ class KanjiCharacterView : FrameLayout, GestureDetector.OnGestureListener, IReca
         return true
     }
 
-    override fun onScroll(motionEvent: MotionEvent, motionEvent1: MotionEvent, v: Float, v1: Float): Boolean
+    override fun onScroll(motionEvent: MotionEvent?, motionEvent1: MotionEvent, v: Float, v1: Float): Boolean
     {
         // scroll event start
         if (mScrollStartEvent == null)
@@ -227,7 +227,7 @@ class KanjiCharacterView : FrameLayout, GestureDetector.OnGestureListener, IReca
         return false
     }
 
-    override fun onFling(motionEvent: MotionEvent, motionEvent1: MotionEvent, v: Float, v1: Float): Boolean
+    override fun onFling(motionEvent: MotionEvent?, motionEvent1: MotionEvent, v: Float, v1: Float): Boolean
     {
         return false
     }
@@ -238,7 +238,7 @@ class KanjiCharacterView : FrameLayout, GestureDetector.OnGestureListener, IReca
         window.copyText()
     }
 
-    override fun onShowPress(e: MotionEvent?)
+    override fun onShowPress(e: MotionEvent)
     {
     }
 

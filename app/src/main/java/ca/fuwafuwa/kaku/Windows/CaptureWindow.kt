@@ -118,7 +118,7 @@ class CaptureWindow(context: Context, windowCoordinator: WindowCoordinator) : Wi
 
         private fun calculateFuriganaPosition(bitmap: Bitmap): Bitmap
         {
-            val screen = bitmap.copy(bitmap.config, true)
+            val screen = bitmap.copy(bitmap.config ?: Bitmap.Config.ARGB_8888, true)
 
             val screenHeight = screen.height
             val screenHeightHalf = (screenHeight / 2).toFloat()

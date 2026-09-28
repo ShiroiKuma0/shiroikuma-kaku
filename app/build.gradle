@@ -1,30 +1,29 @@
 plugins {
     id 'com.android.application'
+    id 'kotlin-android'
 }
 
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-
 android {
-
-    compileSdkVersion 31
+    namespace 'ca.fuwafuwa.kaku'
+    compileSdk 35
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
     }
 
-    def versionPrefix = "1.3"
+    // applicationId, versionCode and versionName come from shiroikuma/fork.gradle.
     defaultConfig {
-        applicationId "ca.fuwafuwa.kaku"
-        minSdkVersion 21
-        targetSdkVersion 31
-        versionCode 78
-        versionName "$versionPrefix.$versionCode"
+        minSdk 24
+        targetSdk 35
     }
 
     buildFeatures {
         viewBinding true
+        buildConfig true
     }
 
     buildTypes {
@@ -37,7 +36,7 @@ android {
             debuggable true
         }
     }
-    packagingOptions {
+    packaging {
         resources {
             excludes += ['META-INF/DEPENDENCIES', 'META-INF/LICENSE', 'META-INF/LICENSE.txt', 'META-INF/license.txt', 'META-INF/NOTICE', 'META-INF/NOTICE.txt', 'META-INF/notice.txt', 'META-INF/ASL2.0', 'META-INF/CONTRIBUTORS.md', 'META-INF/LICENSE.md']
         }
@@ -50,18 +49,19 @@ android {
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'com.rmtheis:tess-two:9.0.0'
-    implementation 'com.google.guava:guava:31.0.1-android'
-    implementation 'com.google.code.gson:gson:2.8.9'
-    implementation 'androidx.appcompat:appcompat:1.4.1'
-    implementation 'com.google.android.material:material:1.6.0'
+    // Tesseract 5 (Tesseract4Android, Apache-2.0) — successor of the dead tess-two 9.0.0 (JCenter).
+    implementation 'com.github.adaptech-cz.Tesseract4Android:tesseract4android-openmp:4.9.0'
+    implementation 'com.google.guava:guava:33.4.8-android'
+    implementation 'com.google.code.gson:gson:2.13.1'
+    implementation 'androidx.appcompat:appcompat:1.7.1'
+    implementation 'androidx.core:core-ktx:1.16.0'
+    implementation 'androidx.activity:activity-ktx:1.10.1'
+    implementation 'androidx.fragment:fragment-ktx:1.8.8'
+    implementation 'com.google.android.material:material:1.12.0'
     implementation 'com.j256.ormlite:ormlite-android:5.1'
-    implementation 'com.google.android.gms:play-services-ads:20.6.0'
     implementation 'com.atilika.kuromoji:kuromoji-core:0.9.0'
     implementation 'com.atilika.kuromoji:kuromoji-ipadic:0.9.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.3'
-    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
     testImplementation 'junit:junit:4.13.2'
     // Probably just delete all these was trying to get GenerateDictionary to work as a Unit Test
     testImplementation 'com.j256.ormlite:ormlite-core:5.1'

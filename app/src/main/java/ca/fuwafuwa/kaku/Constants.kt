@@ -20,8 +20,6 @@ const val KAKU_PREF_IMAGE_FILTER = "ImageFilter"
 const val KAKU_PREF_TEXT_DIRECTION = "TextDirection"
 const val KAKU_PREF_INSTANT_MODE = "InstantMode"
 const val KAKU_PREF_FIRST_LAUNCH = "FirstLaunch"
-const val KAKU_PREF_TIMES_LAUNCHED = "TimesLaunched"
-const val KAKU_PREF_PLAY_STORE_RATED = "PlayStoreRated"
 
 const val EXTRA_PROJECTION_RESULT_CODE = "ca.fuwafuwa.kaku.PROJECTION_RESULT_CODE"
 const val EXTRA_PROJECTION_RESULT_INTENT = "ca.fuwafuwa.kaku.PROJECTION_RESULT_INTENT"
@@ -34,7 +32,6 @@ const val WINDOW_KANJI_CHOICE = "WINDOW_KANJI_CHOICE"
 const val WINDOW_HISTORY = "WINDOW_HISTORY"
 
 const val KAKU_CHANNEL_ID = "kaku_notification_channel_id"
-const val KAKU_CHANNEL_NAME = "Show Kaku Notification"
 
 const val REQUEST_SCREENSHOT = 100
 const val REQUEST_DRAW_ON_TOP = 200
@@ -43,3 +40,4 @@ const val REQUEST_SERVICE_TOGGLE_PAGE_MODE = 400
 const val REQUEST_SERVICE_TOGGLE_INSTANT_MODE = 500
 const val REQUEST_SERVICE_SHUTDOWN = 600
 const val REQUEST_SERVICE_TOGGLE_SHOW_HIDE = 700
+const val REQUEST_POST_NOTIFICATIONS = 800

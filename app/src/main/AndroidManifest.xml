@@ -1,36 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="ca.fuwafuwa.kaku">
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- 白い熊 画 never touches the network: keep any library from merging these back in. -->
+    <uses-permission android:name="android.permission.INTERNET" tools:node="remove" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" tools:node="remove" />
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
 
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/app_name"
         android:largeHeap="true"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <meta-data
-            android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="@string/ads_app_id" />
-
-        <receiver android:name=".MainService$CloseMainService" />
-        <receiver android:name=".MainService$TogglePageModeMainService" />
-        <receiver android:name=".MainService$ToggleInstantModeMainService" />
-        <receiver android:name=".MainService$ToggleImagePreviewMainService" />
-        <receiver android:name=".MainService$ToggleShowHideMainService" />
+        <receiver android:name=".MainService$CloseMainService" android:exported="false" />
+        <receiver android:name=".MainService$TogglePageModeMainService" android:exported="false" />
+        <receiver android:name=".MainService$ToggleInstantModeMainService" android:exported="false" />
+        <receiver android:name=".MainService$ToggleImagePreviewMainService" android:exported="false" />
+        <receiver android:name=".MainService$ToggleShowHideMainService" android:exported="false" />
 
         <activity
             android:name=".MainActivity"
-            android:label="Kaku"
+            android:label="@string/app_name"
             android:noHistory="false"
             android:launchMode="standard"
-            android:screenOrientation="portrait"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -38,24 +40,17 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".BetaActivity"
-            android:label="Kaku Beta"
-            android:noHistory="false"
-            android:launchMode="standard"
-            android:screenOrientation="portrait">
-        </activity>
-
         <activity
             android:name=".TutorialActivity"
-            android:label="Kaku Tutorial"
+            android:label="@string/tutorial_label"
             android:noHistory="false"
             android:launchMode="standard"
-            android:screenOrientation="portrait">
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden">
         </activity>
 
         <activity
             android:name=".PassthroughActivity"
-            android:label="Kaku"
+            android:label="@string/app_name"
             android:launchMode="singleInstance"
             android:noHistory="true"
             android:exported="true">
@@ -71,10 +66,17 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name="shiroikuma.kaku.ProjectionConsentActivity"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:exported="false" />
+
         <service
             android:name=".MainService"
             android:foregroundServiceType="mediaProjection"
-            android:exported="true" />
+            android:exported="false" />
     </application>
 
 </manifest>

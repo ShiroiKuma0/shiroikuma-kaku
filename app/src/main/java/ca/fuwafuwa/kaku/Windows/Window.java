@@ -3,10 +3,12 @@ package ca.fuwafuwa.kaku.Windows;
 import android.content.Context;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
+import android.hardware.display.DisplayManager;
 import android.hardware.input.InputManager;
 import android.os.Build;
 import androidx.core.view.GestureDetectorCompat;
 import android.util.Log;
+import android.view.Display;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -131,7 +133,9 @@ public abstract class Window implements Stoppable, WindowListener {
     private Point getRealDisplaySizeFromContext()
     {
         Point displaySize = new Point();
-        ((WindowManager) context.getSystemService(WINDOW_SERVICE)).getDefaultDisplay().getRealSize(displaySize);
+        // The service is not a visual context, so its WindowManager's display can lag behind a
+        // rotation or fold; the DisplayManager's default display is always current.
+        ((DisplayManager) context.getSystemService(Context.DISPLAY_SERVICE)).getDisplay(Display.DEFAULT_DISPLAY).getRealSize(displaySize);
         return displaySize;
     }
 

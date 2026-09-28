@@ -1,1 +1,3 @@
-Kaku is a fast, powerful Japanese dictionary that stays on top of all your apps. It uses optical character recognition (OCR) technology to recognize kanji on the device screen for you (rather than the slowww tedious process of looking up individual characters manually), making it perfect for Japanese learners who want to study by reading raw manga, play untranslated games, and so on without the hassle of switching apps.
+白い熊 画 is a Japanese OCR popup dictionary that stays on top of all your apps: move a capture box over any Japanese text — raw manga, untranslated games, anything on screen — and it recognises the characters with optical character recognition (OCR) and looks them up, without switching apps.
+
+A fork of Kaku by 0xbad1d3a5, continued where it stopped in 2022: a modern build for current Android, free of Google services and ads, with no network access at all.

@@ -1,9 +1,11 @@
 package ca.fuwafuwa.kaku
 
+import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.media.projection.MediaProjectionManager
 import android.net.Uri
 import android.os.Build
@@ -13,13 +15,14 @@ import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import ca.fuwafuwa.kaku.Dialogs.StarRatingDialogFragment
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import shiroikuma.kaku.applySystemBarPadding
 
 
 class MainActivity : AppCompatActivity()
 {
     private var mIsActivityVisible = false
-    private var mShownRating = false
 
     private lateinit var mPrefs : SharedPreferences
     private lateinit var mStartKakuIntent: Intent
@@ -27,11 +30,6 @@ class MainActivity : AppCompatActivity()
     override fun onCreate(savedInstanceState: Bundle?)
     {
         super.onCreate(savedInstanceState)
-
-        if (isBeta())
-        {
-            startActivity(Intent(this, BetaActivity::class.java))
-        }
 
         mPrefs = getSharedPreferences(KAKU_PREF_FILE, Context.MODE_PRIVATE)
 
@@ -43,6 +41,7 @@ class MainActivity : AppCompatActivity()
         else {
             supportActionBar?.hide()
             setContentView(R.layout.activity_main)
+            applySystemBarPadding(this)
 
             setupKakuDatabasesAndFiles(this)
         }
@@ -52,10 +51,9 @@ class MainActivity : AppCompatActivity()
     {
         super.onStart()
 
+        checkNotificationPermission()
         checkDrawOnTopPermissions()
         checkScreenRecordPermissions()
-
-        showRatingDialog()
     }
 
     override fun onPause()
@@ -76,7 +74,7 @@ class MainActivity : AppCompatActivity()
     {
         Log.d(TAG, "onActivityResult")
 
-        val relaunchAppText = "Relaunch Kaku after verifying permission"
+        val relaunchAppText = getString(R.string.relaunch_after_permission)
 
         if (requestCode == REQUEST_DRAW_ON_TOP)
         {
@@ -139,7 +137,7 @@ class MainActivity : AppCompatActivity()
             }.start()
         }
         else {
-            Toast.makeText(this, "Unable to start Kaku service", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, getString(R.string.unable_to_start_service), Toast.LENGTH_LONG).show()
         }
     }
 
@@ -156,7 +154,7 @@ class MainActivity : AppCompatActivity()
         }
         else
         {
-            Toast.makeText(this, "Manually $checkPermissions\nKaku might not work on this device", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, getString(R.string.manually_check_permission, checkPermissions), Toast.LENGTH_LONG).show()
         }
     }
 
@@ -167,33 +165,22 @@ class MainActivity : AppCompatActivity()
         startActivityForResult(mediaProjectionManager!!.createScreenCaptureIntent(), REQUEST_SCREENSHOT)
     }
 
-    private fun showRatingDialog()
+    /**
+     * Android 13+: the foreground service's notification (show / hide, instant mode, image filter,
+     * shutdown) is only shown once the user allows notifications.
+     */
+    private fun checkNotificationPermission()
     {
-        if (mShownRating)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
         {
-            return
-        }
-
-        mShownRating = true
-
-        val timesLaunched = mPrefs.getInt(KAKU_PREF_TIMES_LAUNCHED, 1)
-        val rated = mPrefs.getBoolean(KAKU_PREF_PLAY_STORE_RATED, false)
-
-        if (timesLaunched % 20 == 0 && !rated)
-        {
-            StarRatingDialogFragment().show(supportFragmentManager, "StarRating")
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), REQUEST_POST_NOTIFICATIONS)
         }
     }
 
     private fun isFirstLaunch() : Boolean
     {
         return mPrefs.getBoolean(KAKU_PREF_FIRST_LAUNCH, true)
-    }
-
-    private fun isBeta() : Boolean
-    {
-        val CURRENT_PROD_VERSION = 73 // just hardcoded, change when a build is ready to be rolled out to prod
-        return BuildConfig.VERSION_CODE > CURRENT_PROD_VERSION
     }
 
     companion object

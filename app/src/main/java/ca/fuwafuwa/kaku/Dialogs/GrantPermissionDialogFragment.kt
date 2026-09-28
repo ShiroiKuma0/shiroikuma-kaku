@@ -10,6 +10,7 @@ import androidx.fragment.app.FragmentActivity
 import ca.fuwafuwa.kaku.KAKU_PREF_FILE
 import ca.fuwafuwa.kaku.KAKU_PREF_FIRST_LAUNCH
 import ca.fuwafuwa.kaku.MainActivity
+import ca.fuwafuwa.kaku.R
 
 class GrantPermissionDialogFragment : DialogFragment()
 {
@@ -19,9 +20,9 @@ class GrantPermissionDialogFragment : DialogFragment()
 
             val builder = AlertDialog.Builder(it)
 
-            builder.setTitle("Grant Kaku Permissions")
-                    .setMessage("Kaku uses optical character recognition (OCR) to detect text from images and works by automatically taking screenshots of your screen when active. After granting permissions, please restart Kaku.\n\nKaku works completely offline and WILL NEVER transmit ANY user data encountered during usage.")
-                    .setPositiveButton("GRANT")
+            builder.setTitle(getString(R.string.grant_title))
+                    .setMessage(getString(R.string.grant_text))
+                    .setPositiveButton(getString(R.string.grant_ok))
                     {
                         _, _ ->
                         run {
@@ -32,7 +33,7 @@ class GrantPermissionDialogFragment : DialogFragment()
                             (activity as FragmentActivity).finish()
                         }
                     }
-                    .setNegativeButton("CANCEL")
+                    .setNegativeButton(getString(android.R.string.cancel))
                     {
                         _, _ ->
                         run {
