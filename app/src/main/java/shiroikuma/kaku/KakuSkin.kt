@@ -59,6 +59,13 @@ object KakuSkin
     fun charTouched(context: Context): Drawable =
             box(context, Color.TRANSPARENT, KakuUi.i(KakuUi.C_CHAR_HL_BORDER), KakuUi.CHAR_HL_BORDER_W, 0f)
 
+    /**
+     * The side of one recognised-character cell: the character's own size and a hair of leading, so
+     * the characters sit side by side like ordinary Japanese text, with no gaps between them.
+     */
+    @JvmStatic
+    fun charCellPx(context: Context): Int = Math.round(dp(context, KakuUi.i(KakuUi.CHAR_FONT_SIZE) * 1.1f))
+
     @JvmStatic
     fun charTypeface(context: Context): Typeface =
             KakuFonts.at(context, KakuUi.s(KakuUi.CHAR_FONT_FAMILY), KakuUi.i(KakuUi.CHAR_FONT_WEIGHT), false)

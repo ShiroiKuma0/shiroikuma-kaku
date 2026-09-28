@@ -167,7 +167,7 @@ public final class KakuUi {
         ALL.add(new Setting(CHAR_HL_BORDER_W, 10));
         ALL.add(new Setting(CHAR_FONT_FAMILY, ""));
         ALL.add(new Setting(CHAR_FONT_WEIGHT, 400));
-        ALL.add(new Setting(CHAR_FONT_SIZE, 20));
+        ALL.add(new Setting(CHAR_FONT_SIZE, 40));
         ALL.add(new Setting(C_ICON, YELLOW));
 
         ALL.add(new Setting(C_CHOICE_BG, BLACK));

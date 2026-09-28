@@ -1,5 +1,6 @@
 package ca.fuwafuwa.kaku;
 
+import shiroikuma.kaku.KakuToast;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
@@ -30,7 +31,7 @@ public class MainServiceHandler extends Handler {
     public void handleMessage(Message message)
     {
         if (message.obj instanceof String){
-            Toast.makeText(mKakuService, message.obj.toString(), Toast.LENGTH_SHORT).show();
+            KakuToast.show(mKakuService, message.obj.toString());
         }
         else if (message.obj instanceof OcrResult)
         {
@@ -51,7 +52,7 @@ public class MainServiceHandler extends Handler {
             }
         }
         else {
-            Toast.makeText(mKakuService, String.format("Unable to handle type: %s", message.obj.getClass().getName()), Toast.LENGTH_SHORT).show();
+            KakuToast.show(mKakuService, String.format("Unable to handle type: %s", message.obj.getClass().getName()));
         }
     }
 }

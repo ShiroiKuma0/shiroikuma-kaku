@@ -2,4 +2,6 @@
 <resources>
     <!-- KakuSkin: a view's role when the app screens are painted ("link", "rule"). -->
     <item name="kaku_skin_role" type="id" />
+    <!-- KanjiChoiceWindow: the character an image tile restores (the original recognition). -->
+    <item name="kaku_choice_original" type="id" />
 </resources>

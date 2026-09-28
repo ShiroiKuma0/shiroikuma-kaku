@@ -17,6 +17,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import shiroikuma.kaku.KakuToast
 import shiroikuma.kaku.applySystemBarPadding
 
 
@@ -82,7 +83,7 @@ class MainActivity : AppCompatActivity()
 
             if (resultCode != Activity.RESULT_OK)
             {
-                Toast.makeText(this, "Check Permission: Draw on Other Apps\n$relaunchAppText", Toast.LENGTH_LONG).show()
+                KakuToast.show(this, "Check Permission: Draw on Other Apps\n$relaunchAppText", true)
                 finish()
             }
 
@@ -95,7 +96,7 @@ class MainActivity : AppCompatActivity()
 
             if (resultCode != Activity.RESULT_OK)
             {
-                Toast.makeText(this, "Check Permission: Record Screen\n$relaunchAppText", Toast.LENGTH_LONG).show()
+                KakuToast.show(this, "Check Permission: Record Screen\n$relaunchAppText", true)
                 finish()
             }
 
@@ -137,7 +138,7 @@ class MainActivity : AppCompatActivity()
             }.start()
         }
         else {
-            Toast.makeText(this, getString(R.string.unable_to_start_service), Toast.LENGTH_LONG).show()
+            KakuToast.show(this, getString(R.string.unable_to_start_service), true)
         }
     }
 
@@ -154,7 +155,7 @@ class MainActivity : AppCompatActivity()
         }
         else
         {
-            Toast.makeText(this, getString(R.string.manually_check_permission, checkPermissions), Toast.LENGTH_LONG).show()
+            KakuToast.show(this, getString(R.string.manually_check_permission, checkPermissions), true)
         }
     }
 

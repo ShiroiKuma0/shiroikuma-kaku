@@ -222,21 +222,8 @@ public final class KakuViews {
         transparentWindow(dialog);
     }
 
-    /** The house toast: bordered pill of dialog ink on the dialog ground. */
+    /** The house toast: bordered pill of dialog ink on the dialog ground (see {@link KakuToast}). */
     public static void toast(@NonNull Context context, @NonNull CharSequence msg) {
-        TextView tv = text(context, msg, 15, ink(), false);
-        int h = dp(context, 20);
-        int v = dp(context, 12);
-        tv.setPadding(h, v, h, v);
-        GradientDrawable bg = new GradientDrawable();
-        bg.setColor(ground());
-        bg.setStroke(Math.max(1, dp(context, 2)), border());
-        bg.setCornerRadius(dp(context, 18));
-        tv.setBackground(bg);
-        Toast t = new Toast(context.getApplicationContext());
-        //noinspection deprecation
-        t.setView(tv);
-        t.setDuration(Toast.LENGTH_SHORT);
-        t.show();
+        KakuToast.show(context, msg);
     }
 }

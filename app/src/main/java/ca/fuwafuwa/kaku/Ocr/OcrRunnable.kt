@@ -101,6 +101,7 @@ class OcrRunnable(context: Context, private var mCaptureWindow: CaptureWindow?) 
                     mTessBaseAPI!!.getHOCRText(0)
                     val displayData = getDisplayData(mOcrParams!!, mTessBaseAPI!!.resultIterator)
                     processDisplayData(displayData)
+                    for (c in displayData.squareChars) (c as? SquareCharOcr)?.let { it.originalChar = it.char }
                     mTessBaseAPI!!.clear()
 
                     if (displayData.text.length > 0)

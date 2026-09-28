@@ -2,6 +2,7 @@
 
 package ca.fuwafuwa.kaku
 
+import shiroikuma.kaku.KakuToast
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -122,7 +123,7 @@ fun setupKakuDatabasesAndFiles(context: Context)
     }
     catch (e: Exception)
     {
-        Toast.makeText(context, context.getString(R.string.unable_to_setup_database), Toast.LENGTH_LONG).show()
+        KakuToast.show(context, context.getString(R.string.unable_to_setup_database), true)
         return
     }
 }

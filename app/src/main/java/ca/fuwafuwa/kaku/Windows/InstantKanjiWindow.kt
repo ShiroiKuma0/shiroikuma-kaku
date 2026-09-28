@@ -51,7 +51,7 @@ class InstantKanjiWindow(context: Context,
                 if (isBoxHorizontal)
                 {
                     count = if (count > 8) 8 else count
-                    params.width = dpToPx(context, 37) * count
+                    params.width = kanjiGrid.cellSizePx() * count
                     if (params.height < minHeight)
                     {
                         params.height = minHeight
@@ -59,7 +59,7 @@ class InstantKanjiWindow(context: Context,
                 }
                 else {
                     count = if (count > 9) 9 else count
-                    params.height = dpToPx(context, 37) * count
+                    params.height = kanjiGrid.cellSizePx() * count
                     if (params.width < minWidth)
                     {
                         params.width = minWidth

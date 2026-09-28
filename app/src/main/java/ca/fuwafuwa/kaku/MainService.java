@@ -1,5 +1,6 @@
 package ca.fuwafuwa.kaku;
 
+import shiroikuma.kaku.KakuToast;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -208,7 +209,7 @@ public class MainService extends Service implements Stoppable {
         }
 
         Log.d(TAG, "CREATING MAINSERVICE: " + System.identityHashCode(this));
-        Toast.makeText(this, getString(R.string.service_starting), Toast.LENGTH_LONG).show();
+        KakuToast.show(this, getString(R.string.service_starting), true);
 
         mMediaProjectionManager = (MediaProjectionManager) getSystemService(MEDIA_PROJECTION_SERVICE);
         mDisplayManager = (DisplayManager) getSystemService(DISPLAY_SERVICE);

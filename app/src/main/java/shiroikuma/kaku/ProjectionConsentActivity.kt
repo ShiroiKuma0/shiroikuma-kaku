@@ -31,7 +31,7 @@ class ProjectionConsentActivity : ComponentActivity()
         }
         else
         {
-            Toast.makeText(this, getString(R.string.capture_consent_declined), Toast.LENGTH_LONG).show()
+            KakuToast.show(this, getString(R.string.capture_consent_declined), true)
         }
         finish()
     }

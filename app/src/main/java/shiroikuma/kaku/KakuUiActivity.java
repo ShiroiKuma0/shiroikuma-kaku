@@ -368,7 +368,7 @@ public class KakuUiActivity extends Activity implements ExportImportPanel.Host {
         fontRow(KakuUi.CHAR_FONT_FAMILY, KakuUi.CHAR_FONT_WEIGHT);
         slider(R.string.kaku_ui_font_weight, KakuUi.CHAR_FONT_WEIGHT, 100, 900, 100, String::valueOf,
                 () -> refreshChars(charPv[0]));
-        slider(R.string.kaku_ui_font_size, KakuUi.CHAR_FONT_SIZE, 12, 32, 1, v -> v + " dp",
+        slider(R.string.kaku_ui_font_size, KakuUi.CHAR_FONT_SIZE, 12, 72, 1, v -> v + " dp",
                 () -> refreshChars(charPv[0]));
         charPv[0] = charsPreview();
         preview(charPv[0]);
@@ -732,7 +732,7 @@ public class KakuUiActivity extends Activity implements ExportImportPanel.Host {
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setTag(KakuViews.NO_SKIN);
         String chars = getString(R.string.kaku_ui_pv_chars);
-        int cell = dp(37);
+        int cell = KakuSkin.charCellPx(this);
         for (int i = 0; i < chars.length(); i++) {
             TextView c = new TextView(this);
             c.setTag(KakuViews.NO_SKIN);
@@ -741,6 +741,7 @@ public class KakuUiActivity extends Activity implements ExportImportPanel.Host {
             c.setTextColor(KakuUi.i(KakuUi.C_CHAR_TEXT));
             c.setTypeface(KakuSkin.charTypeface(this));
             c.setTextSize(TypedValue.COMPLEX_UNIT_DIP, KakuUi.i(KakuUi.CHAR_FONT_SIZE));
+            c.setIncludeFontPadding(false);
             if (i >= chars.length() - 3) c.setBackground(KakuSkin.charHighlight(this));
             else if (i == 0) c.setBackground(KakuSkin.charTouched(this));
             row.addView(c, new LinearLayout.LayoutParams(cell, cell));

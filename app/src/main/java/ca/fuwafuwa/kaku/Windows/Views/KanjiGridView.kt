@@ -1,5 +1,6 @@
 package ca.fuwafuwa.kaku.Windows.Views
 
+import shiroikuma.kaku.KakuSkin
 import android.content.Context
 import android.util.AttributeSet
 import ca.fuwafuwa.kaku.Windows.Data.DisplayData
@@ -21,7 +22,6 @@ class KanjiGridView : SquareGridView, IRecalculateKanjiViews
 
     private var mScrollValue: Int = 0
 
-    private val mKanjiCellSize = squareCellSize
 
     var offset: Int = 0
         private set
@@ -92,10 +92,13 @@ class KanjiGridView : SquareGridView, IRecalculateKanjiViews
     /** Repaint every character cell from the 白い熊 画 UI settings. */
     fun restyle()
     {
+        squareCellSize = KakuSkin.charCellPx(context)
         for (k in kanjiViewList)
         {
+            k.setCellSize(squareCellSize)
             k.restyle()
         }
+        requestLayout()
     }
 
     fun unhighlightAll()
@@ -169,7 +172,7 @@ class KanjiGridView : SquareGridView, IRecalculateKanjiViews
         {
             val kanjiView = KanjiCharacterView(context)
             kanjiView.setDependencies(mWindowCoordinator, mSearchPerformer)
-            kanjiView.setCellSize(mKanjiCellSize)
+            kanjiView.setCellSize(squareCellSize)
 
             addView(kanjiView)
         }

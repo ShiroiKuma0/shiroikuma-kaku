@@ -1,5 +1,6 @@
 package ca.fuwafuwa.kaku.Windows.Views
 
+import shiroikuma.kaku.KakuSkin
 import android.content.Context
 import android.util.AttributeSet
 import android.view.View
@@ -41,13 +42,16 @@ open class SquareGridView : ViewGroup
 
     private fun Init(context: Context)
     {
-        squareCellSize = dpToPx(context, 37)
+        squareCellSize = KakuSkin.charCellPx(context)
     }
 
     fun setCellSize(dp: Int)
     {
         squareCellSize = dpToPx(context, dp)
     }
+
+    /** The side of one cell, in pixels. */
+    fun cellSizePx(): Int = squareCellSize
 
     fun setItemCount(items: Int)
     {
@@ -91,7 +95,9 @@ open class SquareGridView : ViewGroup
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int)
     {
         var columns = (r - l) / squareCellSize
-        val xStart = (r - l - squareCellSize * columns) / 2
+        // Left-aligned: the first character keeps the window's own indent, and the cells follow it
+        // edge to edge like ordinary text (upstream centred the grid, spreading the leftover space).
+        val xStart = 0
         if (columns < 0)
         {
             columns = 1

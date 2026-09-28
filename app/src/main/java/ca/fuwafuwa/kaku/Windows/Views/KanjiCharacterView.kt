@@ -84,6 +84,7 @@ class KanjiCharacterView : FrameLayout, GestureDetector.OnGestureListener, IReca
         mKanjiTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, KakuUi.i(KakuUi.CHAR_FONT_SIZE).toFloat())
         mKanjiTextView.setTextColor(KakuUi.i(KakuUi.C_CHAR_TEXT))
         mKanjiTextView.typeface = KakuSkin.charTypeface(mContext)
+        mKanjiTextView.includeFontPadding = false
         mIconImageView.setColorFilter(KakuUi.i(KakuUi.C_ICON))
     }
 
@@ -109,7 +110,7 @@ class KanjiCharacterView : FrameLayout, GestureDetector.OnGestureListener, IReca
 
     fun setCellSize(px: Int)
     {
-        mCellSizePx = dpToPx(context, pxToDp(context, px) - 2)
+        mCellSizePx = px
     }
 
     fun highlight()
@@ -155,41 +156,46 @@ class KanjiCharacterView : FrameLayout, GestureDetector.OnGestureListener, IReca
                 mKanjiTextView.visibility = View.VISIBLE
                 mIconImageView.visibility = View.INVISIBLE
 
-                val choiceResult = mKanjiChoiceWindow.onSquareScrollEnd(e)
-                when (choiceResult.first)
-                {
-                    ChoiceResultType.SWAP ->
-                    {
-                        mKanjiTextView.text = choiceResult.second
-                        mSquareChar.text = choiceResult.second
-                        recalculateKanjiViews()
-                    }
-                    ChoiceResultType.EDIT ->
-                    {
-                        val window = getProperWindow<Window>()
-                        if (mSquareChar.displayData is DisplayDataOcr)
-                        {
-                            window.hide()
-                        }
-
-                        mEditWindow.setInfo(mSquareChar)
-                        mEditWindow.setInputDoneCallback(this)
-                        mEditWindow.show()
-                    }
-                    ChoiceResultType.DELETE ->
-                    {
-                        mSquareChar.text = ""
-                        recalculateKanjiViews()
-                    }
-                    ChoiceResultType.NONE ->
-                    {
-                        // Do nothing
-                    }
-                }
+                applyChoice(mKanjiChoiceWindow.onSquareScrollEnd(e) { later -> applyChoice(later) })
             }
         }
 
         return true
+    }
+
+    /** What a kanji-choice gesture resolved to: swap in a candidate, edit, delete, or nothing. */
+    private fun applyChoice(choiceResult: Pair<ChoiceResultType, String>)
+    {
+        when (choiceResult.first)
+        {
+            ChoiceResultType.SWAP ->
+            {
+                mKanjiTextView.text = choiceResult.second
+                mSquareChar.text = choiceResult.second
+                recalculateKanjiViews()
+            }
+            ChoiceResultType.EDIT ->
+            {
+                val window = getProperWindow<Window>()
+                if (mSquareChar.displayData is DisplayDataOcr)
+                {
+                    window.hide()
+                }
+
+                mEditWindow.setInfo(mSquareChar)
+                mEditWindow.setInputDoneCallback(this)
+                mEditWindow.show()
+            }
+            ChoiceResultType.DELETE ->
+            {
+                mSquareChar.text = ""
+                recalculateKanjiViews()
+            }
+            ChoiceResultType.NONE ->
+            {
+                // Do nothing
+            }
+        }
     }
 
     override fun recalculateKanjiViews()
@@ -215,14 +221,15 @@ class KanjiCharacterView : FrameLayout, GestureDetector.OnGestureListener, IReca
         if (mScrollStartEvent == null)
         {
             Log.d(TAG, "ScrollStart")
-            mScrollStartEvent = motionEvent
+            mScrollStartEvent = motionEvent ?: motionEvent1
 
             unhighlight()
             mKanjiTextView.visibility = View.INVISIBLE
             mIconImageView.visibility = View.VISIBLE
             mIconImageView.setImageResource(R.drawable.icon_swap)
 
-            mKanjiChoiceWindow.onSquareScrollStart(mSquareChar, getKanjiBoxParams())
+            val start = motionEvent ?: motionEvent1
+            mKanjiChoiceWindow.onSquareScrollStart(mSquareChar, getKanjiBoxParams(), start.rawX, start.rawY)
         }
         // scroll event continuing
         else {
@@ -238,8 +245,16 @@ class KanjiCharacterView : FrameLayout, GestureDetector.OnGestureListener, IReca
         return false
     }
 
+    /**
+     * A quick flick can end before any scroll was reported: open the candidates for it as a swipe
+     * would (the ACTION_UP that follows then leaves them open, or edits / deletes for an upward one).
+     */
     override fun onFling(motionEvent: MotionEvent?, motionEvent1: MotionEvent, v: Float, v1: Float): Boolean
     {
+        if (mScrollStartEvent == null)
+        {
+            onScroll(motionEvent, motionEvent1, 0f, 0f)
+        }
         return false
     }
 

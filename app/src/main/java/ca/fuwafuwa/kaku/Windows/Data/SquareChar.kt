@@ -72,10 +72,17 @@ class SquareCharOcr(override val displayData: DisplayDataOcr,
 {
     override var char : String = ""
 
+    /**
+     * The character as first recognised and shown (after the lookalike corrections), kept through
+     * swaps: the character's own image in the kanji-choice window restores it.
+     */
+    var originalChar : String = ""
+
     init
     {
         sortChoices()
         char = allChoices[0].first
+        originalChar = char
     }
 
     fun addChoice(char: String, certainty: ChoiceCertainty)
@@ -100,7 +107,7 @@ class SquareCharOcr(override val displayData: DisplayDataOcr,
 
     override fun clone(): ISquareChar
     {
-        return SquareCharOcr(displayData, allChoices.toMutableList(), bitmapPos)
+        return SquareCharOcr(displayData, allChoices.toMutableList(), bitmapPos).also { it.originalChar = originalChar }
     }
 
     private fun sortChoices()

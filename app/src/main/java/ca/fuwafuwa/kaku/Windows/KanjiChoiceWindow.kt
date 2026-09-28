@@ -40,6 +40,16 @@ class KanjiChoiceWindow(context: Context, windowCoordinator: WindowCoordinator) 
 
     private var drawnOnTop = false
 
+    /** Where the swipe began (raw screen coordinates): its direction, not where it ends, decides. */
+    private var mStartX = 0f
+    private var mStartY = 0f
+
+    /**
+     * Set while the window stays open after the swipe ended off every candidate: the next tap picks
+     * the candidate under it, or closes the window when it lands anywhere else.
+     */
+    private var pendingChoice: ((Pair<ChoiceResultType, String>) -> Unit)? = null
+
     /**
      * KanjiChoiceWindow does not need to reInit layout as its getDefaultParams() are all relative. Re-initing will cause bugs.
      */
@@ -49,8 +59,11 @@ class KanjiChoiceWindow(context: Context, windowCoordinator: WindowCoordinator) 
         super.reInit(options)
     }
 
-    fun onSquareScrollStart(squareChar: ISquareChar, kanjiBoxParams: BoxParams)
+    fun onSquareScrollStart(squareChar: ISquareChar, kanjiBoxParams: BoxParams, startX: Float, startY: Float)
     {
+        mStartX = startX
+        mStartY = startY
+        pendingChoice = null
         if (squareChar !is SquareCharOcr)
         {
             show()
@@ -81,87 +94,84 @@ class KanjiChoiceWindow(context: Context, windowCoordinator: WindowCoordinator) 
         show()
     }
 
+    /** The icon shown in the character's cell while swiping: edit / delete for an upward swipe, else swap. */
     fun onSquareScroll(e: MotionEvent) : Int
     {
-        var inKanji = false
-
-        for (kanjiView in currentKanjiViews)
+        return when (directionOf(e))
         {
-            val isTextView = kanjiView is TextView
-
-            if (checkForSelection(kanjiView, e) && isTextView)
-            {
-                inKanji = true
-                kanjiView.background = KakuSkin.choiceCell(context, true)
-            }
-            else if (isTextView)
-            {
-                kanjiView.background = KakuSkin.choiceCell(context, false)
-            }
-        }
-
-        return when (getResultTypeForMotionEvent(e, inKanji, drawnOnTop))
-        {
-            ChoiceResultType.EDIT ->
-            {
-                R.drawable.icon_edit
-            }
-            ChoiceResultType.DELETE ->
-            {
-                R.drawable.icon_delete
-            }
-            else ->
-            {
-                R.drawable.icon_swap
-            }
+            ChoiceResultType.EDIT -> R.drawable.icon_edit
+            ChoiceResultType.DELETE -> R.drawable.icon_delete
+            else -> R.drawable.icon_swap
         }
     }
 
-    fun onSquareScrollEnd(e: MotionEvent) : Pair<ChoiceResultType, String>
+    /**
+     * The swipe ended. A clear upward swipe edits (up-left) or deletes (up-right) at once. Anything
+     * else — a swipe down, even a brief flick, or barely any movement — leaves the candidates open,
+     * answered NONE now: releasing never picks one. The choice comes by a tap, through
+     * [onLaterChoice] — a candidate (or the character's own image, which restores the original), or
+     * anywhere else to close.
+     */
+    fun onSquareScrollEnd(e: MotionEvent, onLaterChoice: (Pair<ChoiceResultType, String>) -> Unit) : Pair<ChoiceResultType, String>
     {
-        var swappedKanji = ""
-
-        for (kanjiView in currentKanjiViews)
+        val type = directionOf(e)
+        if (type == ChoiceResultType.NONE && currentKanjiViews.any { candidateOf(it) != null })
         {
-            if (checkForSelection(kanjiView, e) && kanjiView is TextView)
-            {
-                swappedKanji = kanjiView.text.toString()
-            }
+            pendingChoice = onLaterChoice
+            return Pair(ChoiceResultType.NONE, "")
         }
 
         removeKanjiViews()
         hide()
 
-        return Pair(getResultTypeForMotionEvent(e, swappedKanji != "", drawnOnTop), swappedKanji)
+        return Pair(type, "")
     }
 
-    private fun getResultTypeForMotionEvent(e: MotionEvent, inKanji: Boolean, drawnOnTop: Boolean) : ChoiceResultType
+    /** While the candidates wait for a tap: a candidate is picked, a tap anywhere else closes. */
+    override fun onSingleTapUp(e: MotionEvent): Boolean
     {
-        if (inKanji)
+        val callback = pendingChoice ?: return false
+        var chosen = ""
+        for (kanjiView in currentKanjiViews)
         {
-            return ChoiceResultType.SWAP
+            if (checkForSelection(kanjiView, e)) candidateOf(kanjiView)?.let { chosen = it }
         }
-
-        val midpoint = mKanjiBoxParams.x + (mKanjiBoxParams.width / 2)
-        val height = if (drawnOnTop) mKanjiBoxParams.y + mKanjiBoxParams.height + statusBarHeight else mKanjiBoxParams.y + statusBarHeight
-
-        return if (e.rawX < midpoint && heightCheckForResult(e, height, drawnOnTop))
-        {
-            ChoiceResultType.EDIT
-        }
-        else if (e.rawX > midpoint && heightCheckForResult(e, height, drawnOnTop))
-        {
-            ChoiceResultType.DELETE
-        }
-        else
-        {
-            ChoiceResultType.NONE
-        }
+        pendingChoice = null
+        removeKanjiViews()
+        hide()
+        callback(if (chosen != "") Pair(ChoiceResultType.SWAP, chosen) else Pair(ChoiceResultType.NONE, ""))
+        return true
     }
 
-    private fun heightCheckForResult(e: MotionEvent, height: Int, drawnOnTop: Boolean) : Boolean
+    /**
+     * What the swipe means, from its direction: upward by more than half a character is edit (to
+     * the left) or delete (to the right); everything else opens the candidates.
+     */
+    private fun directionOf(e: MotionEvent) : ChoiceResultType
     {
-        return if (drawnOnTop) e.rawY > height else e.rawY < height
+        val dx = e.rawX - mStartX
+        val dy = e.rawY - mStartY
+        val threshold = maxOf(mKanjiBoxParams.height / 2, dpToPx(context, 16))
+        if (dy < -threshold && Math.abs(dy) > Math.abs(dx) / 3)
+        {
+            return if (dx < 0) ChoiceResultType.EDIT else ChoiceResultType.DELETE
+        }
+        return ChoiceResultType.NONE
+    }
+
+
+    /**
+     * The character a tile stands for: a candidate's text, or — for the character's own image —
+     * the character as originally recognised, so tapping the image undoes an earlier swap.
+     */
+    private fun candidateOf(view: View): String?
+    {
+        return when
+        {
+            view is TextView -> view.text.toString()
+            view.getTag(R.id.kaku_choice_original) is String -> view.getTag(R.id.kaku_choice_original) as String
+            else -> null
+        }
     }
 
     private fun checkForSelection(kanjiView: View, e: MotionEvent): Boolean
@@ -216,8 +226,9 @@ class KanjiChoiceWindow(context: Context, windowCoordinator: WindowCoordinator) 
 
     private fun drawOnBottom(squareChar: SquareCharOcr, kanjiBoxParams: BoxParams, choiceParams: BoxParams)
     {
-        val kanjiHeight = kanjiBoxParams.height * 2
-        val kanjiWidth = kanjiBoxParams.width * 2
+        // Twice the character, but no bigger than 72 dp now that the characters themselves are large.
+        val kanjiHeight = minOf(kanjiBoxParams.height * 2, dpToPx(context, 72))
+        val kanjiWidth = minOf(kanjiBoxParams.width * 2, dpToPx(context, 72))
 
         val outerPadding = dpToPx(context, 10)
         val startHeight = choiceParams.y + outerPadding
@@ -253,8 +264,9 @@ class KanjiChoiceWindow(context: Context, windowCoordinator: WindowCoordinator) 
 
     private fun drawOnTop(squareChar: SquareCharOcr, kanjiBoxParams: BoxParams, choiceParams: BoxParams)
     {
-        val kanjiHeight = kanjiBoxParams.height * 2
-        val kanjiWidth = kanjiBoxParams.width * 2
+        // Twice the character, but no bigger than 72 dp now that the characters themselves are large.
+        val kanjiHeight = minOf(kanjiBoxParams.height * 2, dpToPx(context, 72))
+        val kanjiWidth = minOf(kanjiBoxParams.width * 2, dpToPx(context, 72))
 
         val outerPadding = dpToPx(context, 10)
         val startHeight = kanjiBoxParams.y - statusBarHeight - kanjiHeight - outerPadding
@@ -326,6 +338,7 @@ class KanjiChoiceWindow(context: Context, windowCoordinator: WindowCoordinator) 
         charImage.cropToPadding = true
         charImage.setImageBitmap(bitmapChar)
         charImage.background = KakuSkin.choiceImage(context)
+        if (squareChar.originalChar.isNotEmpty()) charImage.setTag(R.id.kaku_choice_original, squareChar.originalChar)
         choiceWindow.addView(charImage)
         currentKanjiViews.add(charImage)
     }
