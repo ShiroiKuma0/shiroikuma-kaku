@@ -63,6 +63,7 @@ public class KakuUiActivity extends Activity implements ExportImportPanel.Host {
     private static final int REQ_OCR_VOCAB = 46;
     private static final int REQ_OCR_ALL = 47;
     private static final int REQ_DICT = 48;
+    private static final int REQ_TESS = 49;
 
     private static final int IND_HEAD = 36;
     private static final int IND_SUB = 54;
@@ -299,6 +300,53 @@ public class KakuUiActivity extends Activity implements ExportImportPanel.Host {
             i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
             startActivityForResult(i, REQ_OCR_ALL);
         });
+
+        sub(getString(R.string.kaku_ocr_sub_tess));
+        java.io.File tess = OcrImport.INSTANCE.tesseractFile(this);
+        boolean tessPresent = tess.isFile() && tess.length() > 0;
+        final String tessUrl = "https://github.com/tesseract-ocr/tessdata/raw/main/jpn.traineddata";
+        SpannableStringBuilder ts = new SpannableStringBuilder();
+        ts.append(tessPresent ? getString(R.string.kaku_ocr_file_present, ShiroikumaExport.humanSize(tess.length()))
+                : getString(R.string.kaku_ocr_file_missing));
+        ts.setSpan(new ForegroundColorSpan(tessPresent ? ink() : KakuUi.WARN), 0, ts.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ts.append('\n').append(tessUrl);
+        View copy = KakuViews.pill(this, getString(R.string.kaku_ocr_copy_url), v -> {
+            ClipboardManager cb = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            if (cb != null) {
+                cb.setPrimaryClip(ClipData.newPlainText("url", tessUrl));
+                KakuViews.toast(this, getString(R.string.kaku_ocr_url_copied));
+            }
+        });
+        itemRow(IND_L2, getString(R.string.kaku_ocr_file_tess), ts, copy, v -> {
+            Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            i.addCategory(Intent.CATEGORY_OPENABLE);
+            i.setType("*/*");
+            startActivityForResult(i, REQ_TESS);
+        });
+    }
+
+    private void importTesseract(final Uri uri) {
+        KakuViews.toast(this, getString(R.string.kaku_ocr_importing));
+        final Context app = getApplicationContext();
+        new Thread(() -> {
+            String body;
+            boolean ok;
+            try {
+                long bytes = OcrImport.INSTANCE.importTesseract(app, uri);
+                body = getString(R.string.kaku_ocr_import_ok, "jpn.traineddata", ShiroikumaExport.humanSize(bytes));
+                ok = true;
+            } catch (Exception e) {
+                body = String.valueOf(e.getMessage());
+                ok = false;
+            }
+            final String b = body;
+            final boolean good = ok;
+            runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) return;
+                rebuild();
+                KakuViews.showInfo(this, getString(good ? R.string.kaku_ocr_import_done_title : R.string.kaku_ocr_import_fail_title), b, true, null);
+            });
+        }, "kaku-tess-import").start();
     }
 
     /** A ✓ in the accent colour for the chosen option, an empty slot of the same width otherwise. */
@@ -1295,6 +1343,8 @@ public class KakuUiActivity extends Activity implements ExportImportPanel.Host {
                 uris.add(data.getData());
             }
             if (!uris.isEmpty()) importOcrFiles(uris, null);
+        } else if (requestCode == REQ_TESS && uri != null) {
+            importTesseract(uri);
         } else if (requestCode == REQ_DICT && resultCode == RESULT_OK && data != null) {
             java.util.ArrayList<Uri> uris = new java.util.ArrayList<>();
             if (data.getClipData() != null) {

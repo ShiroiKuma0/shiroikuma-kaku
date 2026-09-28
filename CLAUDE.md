@@ -11,7 +11,7 @@ Play in January 2025. The installed 1.3.81 was verified identical to upstream `m
 the fork starts there. Goals, in order: a modern, Google-free, network-free build in the family's
 black-yellow look with a full **白い熊 画 UI** settings page; then **MangaOCR** (on-device ONNX,
 Tesseract as fallback) instead of Tesseract 3; then **Yomitan dictionaries** instead of the bundled
-2019 JMdict DB.
+2019 JMdict DB (done; no data is bundled any more).
 
 ## Read this first
 
@@ -125,14 +125,26 @@ All in `app/src/main/java/shiroikuma/kaku/` (ported from shiroikuma-doksho's kit
   greedy decode from 2 to 3, ≤ 300 tokens, whole prefix per step (no KV cache). Top-8 softmax
   candidates per character feed the kanji-choice window; no positions, so each character's picture
   is the whole capture. It reads the unfiltered capture.
-- **Tesseract 5** (Tesseract4Android, legacy engine, bundled `jpn.traineddata`) — chosen on the UI
-  page, and the fallback while MangaOCR is not imported or fails (`OcrRunnable.recognize`).
+- **Tesseract 5** (Tesseract4Android, legacy engine, `files/tessdata/jpn.traineddata`) — chosen on the
+  UI page, and the fallback while MangaOCR is not imported or fails (`OcrRunnable.recognize`).
+  Initialised lazily (`ensureTesseract`), only once the data is there.
+
+**Nothing is bundled (since 0.1.0+020).** Upstream's 2019 JMdict DB and `jpn.traineddata` (57 of the
+59 MB) are gone from the APK, and the unused kuromoji with them. Tesseract's data is imported on the
+UI page's OCR section (`OcrImport.importTesseract`: loaded in Tesseract from a scratch folder first,
+so a wrong file never replaces a working one; URL
+`https://github.com/tesseract-ocr/tessdata/raw/main/jpn.traineddata`, MD5-identical to what was
+bundled). With no OCR data the capture toasts `no_ocr_data`; with no dictionary the result window
+shows the `no_dictionary_imported` notice (`JmSearchResult.notice`, drawn by `DictText`). The start
+screen shows a first-run guide (once per process) while either is missing. `KakuApp` deletes the
+old `files/DB_KakuDict-02-16-2019.db` copy earlier builds made. `deinflect.dat` stays (6 KB) only
+because the dead `JmTask` path still references it.
 - Native libraries are packed compressed (`useLegacyPackaging`): ONNX Runtime is 28 MB raw.
 
 ## Yomitan dictionaries
 
-`shiroikuma/kaku/dict/`: imported Yomitan zips replace the bundled 2019 JMdict as soon as one is
-switched on (`Searcher` → `YomitanTask`; else upstream's `JmTask`).
+`shiroikuma/kaku/dict/`: imported Yomitan zips are the only dictionaries
+(`Searcher` → `YomitanTask`; with none switched on, a notice result instead).
 - `DictDb` — `files/yomitan.db` (memento's shape: dictionaries · terms · term_meta · kanji ·
   kanji_meta · tags; glossaries deflated JSON; lookup indices dropped during an import and rebuilt).
   A dictionary is replaced by one of the same title **or the same indexUrl** (JMdict's title carries

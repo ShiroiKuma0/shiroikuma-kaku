@@ -37,6 +37,8 @@ class OcrRunnable(context: Context, private var mCaptureWindow: CaptureWindow?) 
     private var mTessBaseAPI: TessBaseAPI? = null
     private var mThreadRunning = true
     private var mTessReady = false
+    /** Set by recognize() when no engine had its data, so the "nothing recognised" message can say why. */
+    private var mNoOcrData = false
     private var mOcrParams: OcrParams? = null
 
     val isReadyForOcr: Boolean
@@ -49,15 +51,7 @@ class OcrRunnable(context: Context, private var mCaptureWindow: CaptureWindow?) 
 
     override fun run()
     {
-        mTessBaseAPI = TessBaseAPI()
-        val storagePath = mContext.filesDir.absolutePath
-        // Tesseract 5: the legacy engine gives per-character alternatives for the kanji-choice
-        // window, as tess-two (Tesseract 3) did; fall back to the default engine if it is missing.
-        if (!mTessBaseAPI!!.init(storagePath, "jpn", TessBaseAPI.OEM_TESSERACT_ONLY))
-        {
-            Log.w(TAG, "Legacy Tesseract engine unavailable, using the default engine")
-            mTessBaseAPI!!.init(storagePath, "jpn")
-        }
+        ensureTesseract()
 
         mTessReady = true
 
@@ -90,9 +84,9 @@ class OcrRunnable(context: Context, private var mCaptureWindow: CaptureWindow?) 
 
                     when (mOcrParams!!.textDirection)
                     {
-                        TextDirection.VERTICAL -> mTessBaseAPI!!.pageSegMode = TessBaseAPI.PageSegMode.PSM_SINGLE_BLOCK_VERT_TEXT
+                        TextDirection.VERTICAL -> ensureTesseract()?.pageSegMode = TessBaseAPI.PageSegMode.PSM_SINGLE_BLOCK_VERT_TEXT
                         // AUTO is resolved to a direction by CaptureWindow before it gets here.
-                        TextDirection.HORIZONTAL, TextDirection.AUTO -> mTessBaseAPI!!.pageSegMode = TessBaseAPI.PageSegMode.PSM_SINGLE_BLOCK
+                        TextDirection.HORIZONTAL, TextDirection.AUTO -> ensureTesseract()?.pageSegMode = TessBaseAPI.PageSegMode.PSM_SINGLE_BLOCK
                     }
 
                     saveBitmap(mOcrParams!!.bitmap)
@@ -109,7 +103,8 @@ class OcrRunnable(context: Context, private var mCaptureWindow: CaptureWindow?) 
                         sendOcrResultToContext(OcrResult(displayData, ocrTime))
                     } else
                     {
-                        sendToastToContext(mContext.getString(R.string.no_characters_recognized))
+                        sendToastToContext(mContext.getString(if (mNoOcrData) R.string.no_ocr_data else R.string.no_characters_recognized))
+                        mNoOcrData = false
                     }
 
                     mCaptureWindow!!.stopLoadingAnimation(mOcrParams!!.instantMode)
@@ -138,7 +133,7 @@ class OcrRunnable(context: Context, private var mCaptureWindow: CaptureWindow?) 
             }
 
             mOcrParams = ocrParams
-            mTessBaseAPI!!.stop()
+            mTessBaseAPI?.stop()
             mOcrLock.notify()
 
             Log.d(TAG, "NOTIFIED")
@@ -150,7 +145,7 @@ class OcrRunnable(context: Context, private var mCaptureWindow: CaptureWindow?) 
      */
     fun cancel()
     {
-        mTessBaseAPI!!.stop()
+        mTessBaseAPI?.stop()
         Log.d(TAG, "CANCELED")
     }
 
@@ -167,7 +162,7 @@ class OcrRunnable(context: Context, private var mCaptureWindow: CaptureWindow?) 
 
             if (mTessBaseAPI != null)
             {
-                mTessBaseAPI!!.stop()
+                mTessBaseAPI?.stop()
             }
 
             mOcrLock.notify()
@@ -248,6 +243,28 @@ class OcrRunnable(context: Context, private var mCaptureWindow: CaptureWindow?) 
      * MangaOCR when it is the chosen engine and its model is imported (UI page → OCR); Tesseract
      * otherwise, and as the fallback whenever MangaOCR cannot run.
      */
+    /**
+     * Tesseract, once its data has been imported (UI page → OCR); null while it has not. Tesseract 5:
+     * the legacy engine gives per-character alternatives for the kanji-choice window, as tess-two
+     * (Tesseract 3) did; the default engine is the fallback when the legacy one is missing.
+     */
+    private fun ensureTesseract(): TessBaseAPI?
+    {
+        mTessBaseAPI?.let { return it }
+        val data = java.io.File(mContext.filesDir, "$TESS_FOLDER_NAME/$TESS_DATA_NAME")
+        if (!data.isFile || data.length() == 0L) return null
+        val api = TessBaseAPI()
+        val storagePath = mContext.filesDir.absolutePath
+        val ok = api.init(storagePath, "jpn", TessBaseAPI.OEM_TESSERACT_ONLY) || api.init(storagePath, "jpn")
+        if (!ok)
+        {
+            api.recycle()
+            return null
+        }
+        mTessBaseAPI = api
+        return api
+    }
+
     private fun recognize(ocrParams: OcrParams): DisplayDataOcr
     {
         if (KakuUi.s(KakuUi.OCR_ENGINE) == KakuUi.ENGINE_MANGAOCR && MangaOcr.installed(mContext))
@@ -261,10 +278,17 @@ class OcrRunnable(context: Context, private var mCaptureWindow: CaptureWindow?) 
                 Log.w(TAG, "MangaOCR failed, falling back to Tesseract", e)
             }
         }
-        mTessBaseAPI!!.setImage(ocrParams.bitmap)
-        mTessBaseAPI!!.getHOCRText(0)
-        val displayData = getDisplayData(ocrParams, mTessBaseAPI!!.resultIterator)
-        mTessBaseAPI!!.clear()
+        val tess = ensureTesseract()
+        if (tess == null)
+        {
+            // Neither engine has its data yet: the caller says where to import it.
+            mNoOcrData = true
+            return DisplayDataOcr(ocrParams.originalBitmap, ocrParams.box, ocrParams.instantMode, ArrayList())
+        }
+        tess.setImage(ocrParams.bitmap)
+        tess.getHOCRText(0)
+        val displayData = getDisplayData(ocrParams, tess.resultIterator)
+        tess.clear()
         return displayData
     }
 

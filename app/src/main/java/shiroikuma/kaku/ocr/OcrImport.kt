@@ -66,6 +66,40 @@ object OcrImport
         }
     }
 
+    /** Where Tesseract's Japanese data lives (as the engine expects it: `tessdata/jpn.traineddata`). */
+    fun tesseractFile(context: Context) = File(context.applicationContext.filesDir, "tessdata/jpn.traineddata")
+
+    /**
+     * Copy [uri] in as Tesseract's `jpn.traineddata` — checked first by loading it in Tesseract from
+     * a scratch folder, so a wrong file never replaces a working one. Returns the size in bytes.
+     */
+    @Throws(IOException::class)
+    fun importTesseract(context: Context, uri: Uri): Long
+    {
+        val app = context.applicationContext
+        val check = File(app.cacheDir, "tess-check/tessdata").apply { mkdirs() }
+        val part = File(check, "jpn.traineddata")
+        try
+        {
+            val input = app.contentResolver.openInputStream(uri) ?: throw IOException("cannot open the file")
+            input.use { inp -> part.outputStream().use { out -> inp.copyTo(out, 256 * 1024) } }
+            val api = com.googlecode.tesseract.android.TessBaseAPI()
+            val ok = try { api.init(check.parentFile!!.absolutePath, "jpn") } finally { api.recycle() }
+            if (!ok) throw IOException("Tesseract cannot load this file — it must be Tesseract's Japanese jpn.traineddata")
+            val dest = tesseractFile(app)
+            dest.parentFile?.mkdirs()
+            if (!part.renameTo(dest))
+            {
+                part.copyTo(dest, overwrite = true)
+            }
+            return dest.length()
+        }
+        finally
+        {
+            part.delete()
+        }
+    }
+
     private fun check(target: String, file: File)
     {
         if (target == MangaOcr.VOCAB)

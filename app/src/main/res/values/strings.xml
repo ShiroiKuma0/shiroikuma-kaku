@@ -34,6 +34,13 @@
     <string name="grant_ok">Grant</string>
 
     <string name="no_dictionary_entry">No dictionary entry found</string>
+    <string name="no_dictionary_imported">No dictionary imported yet. Open 白い熊 画 UI (long-press the cog on the start screen) → Dictionaries, and import JMdict — Copy URL shows where to get it.</string>
+    <string name="first_run_title">Import the data</string>
+    <string name="first_run_ocr">No OCR data yet: 白い熊 画 reads nothing until MangaOCR (recommended) or the Tesseract data is imported — OCR section.</string>
+    <string name="first_run_dict">No dictionary yet: lookups find nothing until a Yomitan dictionary (JMdict) is imported — Dictionaries section.</string>
+    <string name="first_run_where">Both are in 白い熊 画 UI (long-press the cog). Each row has Copy URL — open it in a browser, download, then tap the row to import the file.</string>
+    <string name="first_run_open">Open 白い熊 画 UI</string>
+    <string name="no_ocr_data">No OCR data imported yet — open 白い熊 画 UI → OCR and import MangaOCR (or the Tesseract data).</string>
     <string name="no_characters_recognized">No characters recognised.</string>
     <string name="handwrite_here">Handwrite here</string>
 

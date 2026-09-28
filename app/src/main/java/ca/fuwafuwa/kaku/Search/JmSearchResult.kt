@@ -14,5 +14,7 @@ data class JmSearchResult(
         val deinfInfo: DeinflectionInfo,
         val word: String,
         val yomitan: DictLookup.Entry? = null,
-        val kanji: List<DictLookup.Kanji> = emptyList()
+        val kanji: List<DictLookup.Kanji> = emptyList(),
+        /** Shown instead of entries: no dictionary is imported yet (白い熊 画 ships none). */
+        val notice: String? = null
 )

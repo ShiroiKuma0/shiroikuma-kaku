@@ -103,19 +103,10 @@ fun startKakuService(context: Context, i: Intent)
 fun setupKakuDatabasesAndFiles(context: Context)
 {
     try {
-        val filesAndPaths = hashMapOf(
-                JMDICT_DATABASE_NAME to context.filesDir.absolutePath,
-                TESS_DATA_NAME to "${context.filesDir.absolutePath}/$TESS_FOLDER_NAME")
-
-        if (shouldResetData(filesAndPaths))
-        {
-            Log.d(TAG, "Resetting Data")
-            for (fileAndPath in filesAndPaths){
-                File("${fileAndPath.value}/${fileAndPath.key}").delete()
-            }
-        }
-
-        copyFilesIfNotExists(context, filesAndPaths)
+        // 白い熊 画 ships no data: OCR data and dictionaries are imported on the UI page (OCR,
+        // Dictionaries) and restored by Export / Import. Only the folders are made here; files an
+        // earlier build copied out of its assets stay where they are.
+        createDirIfNotExists("${context.filesDir.absolutePath}/$TESS_FOLDER_NAME")
 
         var screenshotPath: String = context.filesDir.absolutePath + "/$SCREENSHOT_FOLDER_NAME"
         createDirIfNotExists(screenshotPath)

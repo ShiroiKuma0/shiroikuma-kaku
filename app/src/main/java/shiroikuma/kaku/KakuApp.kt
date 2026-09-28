@@ -18,6 +18,12 @@ class KakuApp : Application()
         CameraActivity.applyLauncherIcon(this)
         // A dictionary import the process died in the middle of is removed, never half-used.
         Thread { try { shiroikuma.kaku.dict.DictDb.get(this).deleteIncomplete() } catch (ignored: Exception) {} }.start()
+        // Builds up to 0.1.0+019 copied upstream's 2019 JMdict out of the APK into files/; nothing reads it
+        // any more (lookups use the imported Yomitan dictionaries), so the 22 MB copy goes.
+        for (n in listOf(ca.fuwafuwa.kaku.JMDICT_DATABASE_NAME, ca.fuwafuwa.kaku.JMDICT_DATABASE_NAME + "-journal"))
+        {
+            java.io.File(filesDir, n).delete()
+        }
         registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks
         {
             override fun onActivityResumed(activity: Activity)

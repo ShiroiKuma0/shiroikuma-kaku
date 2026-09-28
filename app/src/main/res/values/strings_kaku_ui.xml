@@ -140,8 +140,8 @@
     <string name="kaku_ocr_engine_manga" translatable="false">MangaOCR</string>
     <string name="kaku_ocr_engine_manga_desc" translatable="false">The best Japanese OCR there is (the same model as on the desktop): manga, game text, stylised fonts, vertical or horizontal without being told. Reads one block of text at a time — a bubble, a line or a few lines. Needs its model, below.</string>
     <string name="kaku_ocr_engine_tess" translatable="false">Tesseract</string>
-    <string name="kaku_ocr_engine_tess_desc" translatable="false">Tesseract 5 with the bundled Japanese data. Weaker on stylised text; always available.</string>
-    <string name="kaku_ocr_manga_missing" translatable="false">The MangaOCR model is not imported yet — Tesseract reads meanwhile.</string>
+    <string name="kaku_ocr_engine_tess_desc" translatable="false">Tesseract 5 with its Japanese data (import it below). Weaker on stylised text, but gives each character\'s own picture in the kanji choice.</string>
+    <string name="kaku_ocr_manga_missing" translatable="false">The MangaOCR model is not imported yet — Tesseract reads meanwhile, if its data is imported.</string>
     <string name="kaku_ocr_sub_manga" translatable="false">MangaOCR model</string>
     <string name="kaku_ocr_manga_note" translatable="false">白い熊 画 has no network access: download these three files in a browser (Copy URL puts the address on the clipboard), then tap a row to import it — or import all three at once. About 117 MB together; the OCR data category of Export / Import carries them to a new phone.</string>
     <string name="kaku_ocr_file_encoder" translatable="false">Encoder (encoder_model_quantized.onnx)</string>
@@ -151,6 +151,8 @@
     <string name="kaku_ocr_file_missing" translatable="false">Not imported</string>
     <string name="kaku_ocr_copy_url" translatable="false">Copy URL</string>
     <string name="kaku_ocr_url_copied" translatable="false">URL copied — paste it into a browser.</string>
+    <string name="kaku_ocr_sub_tess" translatable="false">Tesseract data</string>
+    <string name="kaku_ocr_file_tess" translatable="false">Japanese (jpn.traineddata, 36 MB)</string>
     <string name="kaku_ocr_import_all" translatable="false">Import all three…</string>
     <string name="kaku_ocr_import_all_desc" translatable="false">Pick the three downloaded files together; each is recognised by its name.</string>
     <string name="kaku_ocr_importing" translatable="false">Importing and checking…</string>
@@ -162,7 +164,7 @@
     <!-- Dictionaries -->
     <string name="dict_sec" translatable="false">Dictionaries</string>
     <string name="dict_engine_yomitan" translatable="false">Lookups use the imported dictionaries below, in this order.</string>
-    <string name="dict_engine_bundled" translatable="false">No dictionary imported yet — lookups use the bundled JMdict of 2019.</string>
+    <string name="dict_engine_bundled" translatable="false">No dictionary imported yet — lookups find nothing until you import one (JMdict below).</string>
     <string name="dict_count_terms" translatable="false">%1$,d terms</string>
     <string name="dict_count_kanji" translatable="false">%1$,d kanji</string>
     <string name="dict_count_meta" translatable="false">%1$,d frequency / pitch</string>

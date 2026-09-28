@@ -14,7 +14,11 @@ import android.widget.ImageView
 import shiroikuma.kaku.KakuFork
 import shiroikuma.kaku.KakuUiActivity
 import shiroikuma.kaku.KakuUi
+import shiroikuma.kaku.KakuViews
 import shiroikuma.kaku.camera.CameraActivity
+import shiroikuma.kaku.dict.DictDb
+import shiroikuma.kaku.ocr.MangaOcr
+import shiroikuma.kaku.ocr.OcrImport
 import java.util.*
 
 
@@ -97,6 +101,7 @@ class MainStartFragment : Fragment()
 
         rootView.findViewById<ImageView>(R.id.kaku_settings).setColorFilter(KakuUi.i(KakuUi.C_ACCENT))
         rootView.findViewById<ImageView>(R.id.kaku_camera).setColorFilter(KakuUi.i(KakuUi.C_ACCENT))
+        showFirstRunGuide()
 
         if (!MainService.IsRunning())
         {
@@ -114,6 +119,31 @@ class MainStartFragment : Fragment()
         }, 3000)
     }
 
+    /**
+     * 白い熊 画 ships no OCR data and no dictionary: until both are imported, the start screen says
+     * so once per process and offers the way to 白い熊 画 UI, where the OCR and Dictionaries sections
+     * show the download URLs and import the files.
+     */
+    private fun showFirstRunGuide()
+    {
+        if (sGuideShown) return
+        val ctx = mainActivity.applicationContext
+        val ocr = MangaOcr.installed(ctx) || OcrImport.tesseractFile(ctx).let { it.isFile && it.length() > 0 }
+        val dict = try { DictDb.get(ctx).hasEnabledTerms() } catch (e: Exception) { false }
+        if (ocr && dict) return
+        sGuideShown = true
+        val missing = StringBuilder()
+        if (!ocr) missing.append(getString(R.string.first_run_ocr))
+        if (!dict)
+        {
+            if (missing.isNotEmpty()) missing.append("\n\n")
+            missing.append(getString(R.string.first_run_dict))
+        }
+        missing.append("\n\n").append(getString(R.string.first_run_where))
+        KakuViews.showConfirm(mainActivity, getString(R.string.first_run_title), missing,
+                getString(R.string.first_run_open)) { KakuUiActivity.open(mainActivity) }
+    }
+
     fun onKakuLoadStart()
     {
         progressBar.isIndeterminate = true
@@ -126,5 +156,11 @@ class MainStartFragment : Fragment()
         progressBar.isIndeterminate = false
         progressBar.progress = 100
         supportText.text = getString(R.string.kaku_running)
+    }
+
+    companion object
+    {
+        /** The first-run guide shows at most once per process. */
+        private var sGuideShown = false
     }
 }

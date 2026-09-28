@@ -44,16 +44,17 @@ public class Searcher implements JmTask.SearchJmTaskDone {
 
     public void search(SearchInfo searchInfo)
     {
-        // Imported Yomitan dictionaries answer when any is switched on; the bundled 2019 JMdict otherwise.
+        // The imported Yomitan dictionaries answer; 白い熊 画 ships none (upstream's bundled 2019 JMdict
+        // is gone), so without one the result window says where to import it.
         if (shiroikuma.kaku.dict.DictDb.get(mContext).hasEnabledTerms()) {
             new YomitanTask(searchInfo, this, mContext).executeOnExecutor(AsyncTask.SERIAL_EXECUTOR);
             return;
         }
-        try {
-            new JmTask(searchInfo, this, mContext).executeOnExecutor(AsyncTask.SERIAL_EXECUTOR);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        String ch = searchInfo.getSquareChar().getChar();
+        java.util.List<JmSearchResult> notice = new java.util.ArrayList<>();
+        notice.add(new JmSearchResult(new EntryOptimized(), new ca.fuwafuwa.kaku.Deinflictor.DeinflectionInfo(ch, 0, ""), ch,
+                null, java.util.Collections.emptyList(), mContext.getString(ca.fuwafuwa.kaku.R.string.no_dictionary_imported)));
+        if (mSearchDictDone != null) mSearchDictDone.jmResultsCallback(notice, searchInfo);
     }
 
     @Override
