@@ -814,6 +814,7 @@ public final class ShiroikumaExport {
                             break;
                         }
                         case DICTIONARY: {
+                            shiroikuma.kaku.dict.DictDb.closeInstance();   // the file is replaced under it
                             int files = restoreEntries(zip, DICT_PREFIX, dictDir(app), ShiroikumaExport::isDictName);
                             line = app.getString(R.string.kaku_eim_files_result, files);
                             break;

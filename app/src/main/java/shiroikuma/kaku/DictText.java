@@ -38,6 +38,11 @@ public final class DictText
     @NonNull
     public static CharSequence build(@NonNull Context context, @NonNull List<JmSearchResult> jmResults, int maxSenses)
     {
+        if (!jmResults.isEmpty() && (jmResults.get(0).getYomitan() != null || !jmResults.get(0).getKanji().isEmpty())) {
+            java.util.List<shiroikuma.kaku.dict.DictLookup.Entry> entries = new java.util.ArrayList<>();
+            for (JmSearchResult r : jmResults) if (r.getYomitan() != null) entries.add(r.getYomitan());
+            return shiroikuma.kaku.dict.YomitanText.INSTANCE.build(context, entries, jmResults.get(0).getKanji(), maxSenses);
+        }
         SpannableStringBuilder sb = new SpannableStringBuilder();
         int headPx = Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP,
                 KakuUi.i(KakuUi.DICT_FONT_SIZE) * KakuUi.i(KakuUi.DICT_HEAD_SCALE) / 100f,

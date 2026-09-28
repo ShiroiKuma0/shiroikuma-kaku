@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Static app shortcuts of 白い熊 画: long-press the launcher icon; drag one out for a one-tap icon. -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="camera"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher_camera"
+        android:shortcutShortLabel="@string/camera_short"
+        android:shortcutLongLabel="@string/camera_label">
+        <intent
+            android:action="shiroikuma.kaku.action.CAMERA"
+            android:targetPackage="shiroikuma.kaku"
+            android:targetClass="shiroikuma.kaku.camera.CameraActivity" />
+    </shortcut>
+</shortcuts>

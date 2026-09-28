@@ -148,6 +148,8 @@ public class MainService extends Service implements Stoppable {
     }
 
     private static boolean isKakuRunning = false;
+    /** The running service, for the camera view's live mode; null when it is not running. */
+    private static MainService sInstance;
 
     private static final int VIRTUAL_DISPLAY_FLAGS = DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY | DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC;
     private static final int NOTIFICATION_ID = 1;
@@ -223,6 +225,7 @@ public class MainService extends Service implements Stoppable {
         ServiceCompat.startForeground(this, NOTIFICATION_ID, getNotification(),
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ? ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION : 0);
         isKakuRunning = true;
+        sInstance = this;
     }
 
     @Override
@@ -250,7 +253,7 @@ public class MainService extends Service implements Stoppable {
         else
         {
             mWindowCoordinator.stopAllWindows();
-            stop();
+            pauseCapture();
         }
 
         // Set notification text
@@ -311,6 +314,7 @@ public class MainService extends Service implements Stoppable {
         mWindowCoordinator.stopAllWindows();
         mWindowCoordinator = null;
         isKakuRunning = false;
+        if (sInstance == this) sInstance = null;
 
         Log.d(TAG, String.format("MAINSERVICE: %s DESTROYED", System.identityHashCode(this)));
         super.onDestroy();
@@ -322,6 +326,44 @@ public class MainService extends Service implements Stoppable {
         if (mMediaProjection != null)
         {
             mMediaProjection.stop();
+        }
+    }
+
+    /**
+     * Live mode of the camera view: recognise what is under the capture box now — unless the box is
+     * hidden, or the full result window is open (it would cover the box in the screenshot).
+     * Safe to call from any thread; a no-op when the service is not running.
+     */
+    public static void recognizeInCaptureBox()
+    {
+        final MainService service = sInstance;
+        if (service == null || service.mHandler == null) return;
+        service.mHandler.post(() -> {
+            WindowCoordinator windows = service.mWindowCoordinator;
+            if (windows == null || !windows.hasWindow(Constants.WINDOW_CAPTURE)) return;
+            if (windows.hasWindow(Constants.WINDOW_INFO) && windows.getWindow(Constants.WINDOW_INFO).isShowing()) return;
+            Window capture = windows.getWindow(Constants.WINDOW_CAPTURE);
+            if (capture instanceof ca.fuwafuwa.kaku.Windows.CaptureWindow && capture.isShowing())
+            {
+                ((ca.fuwafuwa.kaku.Windows.CaptureWindow) capture).recognizeNow();
+            }
+        });
+    }
+
+    /**
+     * Hidden (power-saving): stop drawing the screen into the capture surface, but keep the
+     * projection and its virtual display — showing the box again resumes them
+     * (createVirtualDisplay re-attaches a surface) without a new screen-capture consent. Upstream
+     * stopped the projection here, and re-showing then depended on reusing a spent consent.
+     */
+    private void pauseCapture()
+    {
+        if (mVirtualDisplay != null) {
+            mVirtualDisplay.setSurface(null);
+        }
+        if (mImageReader != null) {
+            mImageReader.close();
+            mImageReader = null;
         }
     }
 
@@ -340,14 +382,24 @@ public class MainService extends Service implements Stoppable {
     {
         if (mMediaProjection == null){
             Log.d(TAG, "mMediaProjection is null");
-            if (mProjectionResultIntent == null || (mProjectionTokenUsed && Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE)){
-                // The consent was spent (screen turned off, or the system stopped the projection):
-                // ask again; its result restarts this service with a fresh token.
+            if (mProjectionResultIntent == null || mProjectionTokenUsed){
+                // The consent was spent — the system ended the projection. A consent is single-use
+                // (Android 14 enforces it; EMUI already fails the reuse silently: the capture
+                // surface is dead). Ask again; its result restarts this service with a fresh token.
                 ProjectionConsentActivity.request(this);
                 return;
             }
-            mMediaProjection = mMediaProjectionManager.getMediaProjection(mProjectionResultCode, mProjectionResultIntent);
+            try {
+                mMediaProjection = mMediaProjectionManager.getMediaProjection(mProjectionResultCode, mProjectionResultIntent);
+            } catch (Exception e) {
+                Log.w(TAG, "screen-capture consent unusable", e);
+                mMediaProjection = null;
+            }
             mProjectionTokenUsed = true;
+            if (mMediaProjection == null) {
+                ProjectionConsentActivity.request(this);
+                return;
+            }
             mMediaProjectionStopCallback = new MediaProjectionStopCallback();
             mMediaProjection.registerCallback(mMediaProjectionStopCallback, mHandler);
         }
@@ -362,10 +414,12 @@ public class MainService extends Service implements Stoppable {
     public Image getScreenshot() throws InterruptedException
     {
         long startTime = System.nanoTime();
-        Image image = mImageReader.acquireLatestImage();
+        ImageReader reader = mImageReader;
+        if (reader == null) return null;   // capture paused (hidden) or not started yet
+        Image image = reader.acquireLatestImage();
         while (image == null && System.nanoTime() < startTime + 2000000000){
             Thread.sleep(20);
-            image = mImageReader.acquireLatestImage();
+            image = reader.acquireLatestImage();
         }
         return image;
     }
@@ -385,6 +439,8 @@ public class MainService extends Service implements Stoppable {
         PendingIntent togglePageMode = PendingIntent.getBroadcast(this, Constants.REQUEST_SERVICE_TOGGLE_PAGE_MODE, new Intent(this, TogglePageModeMainService.class), PendingIntent.FLAG_IMMUTABLE);
         PendingIntent toggleInstantMode = PendingIntent.getBroadcast(this, Constants.REQUEST_SERVICE_TOGGLE_INSTANT_MODE, new Intent(this, ToggleInstantModeMainService.class), PendingIntent.FLAG_IMMUTABLE);
         PendingIntent closeMainService = PendingIntent.getBroadcast(this, Constants.REQUEST_SERVICE_SHUTDOWN, new Intent(this, CloseMainService.class), PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent openCamera = PendingIntent.getActivity(this, Constants.REQUEST_OPEN_CAMERA,
+                new Intent(this, shiroikuma.kaku.camera.CameraActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), PendingIntent.FLAG_IMMUTABLE);
 
         Prefs prefs = KakuTools.getPrefs(this);
 
@@ -412,8 +468,8 @@ public class MainService extends Service implements Stoppable {
                             getString(prefs.getInstantModeSetting() ? R.string.on : R.string.off),
                             getString(prefs.getImageFilterSetting() ? R.string.on : R.string.off)))
                     .setContentIntent(toggleShowHide)
+                    .addAction(0, getString(R.string.notification_camera), openCamera)
                     .addAction(0, getString(R.string.notification_instant_mode), toggleInstantMode)
-                    .addAction(0, getString(R.string.notification_image_filter), toggleImagePreview)
                     .addAction(0, getString(R.string.notification_shutdown), closeMainService)
                     .build();
         }

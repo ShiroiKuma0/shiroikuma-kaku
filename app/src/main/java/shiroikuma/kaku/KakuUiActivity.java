@@ -62,6 +62,7 @@ public class KakuUiActivity extends Activity implements ExportImportPanel.Host {
     private static final int REQ_OCR_DECODER = 45;
     private static final int REQ_OCR_VOCAB = 46;
     private static final int REQ_OCR_ALL = 47;
+    private static final int REQ_DICT = 48;
 
     private static final int IND_HEAD = 36;
     private static final int IND_SUB = 54;
@@ -151,6 +152,9 @@ public class KakuUiActivity extends Activity implements ExportImportPanel.Host {
         sectionExportImport();
         sectionBehaviour();
         sectionOcr();
+        sectionDictionaries();
+        sectionCapture();
+        sectionCamera();
         sectionColours();
         sectionShapes();
         sectionFonts();
@@ -372,6 +376,275 @@ public class KakuUiActivity extends Activity implements ExportImportPanel.Host {
                         body, true, null);
             });
         }, "kaku-ocr-import").start();
+    }
+
+    // ---- Dictionaries ------------------------------------------------------------------------------
+
+    /** The line under the heading that follows a running import, updated in place. */
+    @Nullable
+    private TextView importStatus;
+
+    private final shiroikuma.kaku.dict.DictImportService.Listener importListener = new shiroikuma.kaku.dict.DictImportService.Listener() {
+        @Override
+        public void onProgress(@NonNull shiroikuma.kaku.dict.DictImport.Progress p) {
+            if (importStatus != null) importStatus.setText(importLine(p));
+            if (!importDialogHidden) showImportDialog();
+            updateImportDialog(p);
+        }
+
+        @Override
+        public void onFinished(@NonNull String report) {
+            rebuild();
+            finishImportDialog(report);
+        }
+    };
+
+    // ---- the import dialog: live progress on the page itself ----------------------------------
+
+    @Nullable private android.app.AlertDialog importDialog;
+    @Nullable private TextView importDialogTitle;
+    @Nullable private TextView importDialogDetail;
+    @Nullable private android.widget.ProgressBar importDialogBar;
+    @Nullable private LinearLayout importDialogButtons;
+    /** 「In the background」 was pressed: the import goes on (its notification stays), the dialog stays shut. */
+    private boolean importDialogHidden;
+
+    /**
+     * The running import as a bordered dialog: which dictionary, what it is doing (reading the file,
+     * rows and bank n/m, building the index) and a progress bar over the banks. 「In the background」
+     * closes it (the import and its notification go on); when the import ends, the dialog turns into
+     * its result with OK.
+     */
+    private void showImportDialog() {
+        if (importDialog != null && importDialog.isShowing()) return;
+        LinearLayout box = KakuViews.infoBox(this, getString(R.string.dict_import_title), "");
+        // infoBox's body line (child 1) becomes the dictionary line; a detail line and the bar follow.
+        importDialogTitle = (TextView) box.getChildAt(1);
+        importDialogDetail = KakuViews.text(this, "", 14, KakuViews.ink(), false);
+        importDialogDetail.setPadding(0, dp(6), 0, 0);
+        box.addView(importDialogDetail);
+        importDialogBar = new android.widget.ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        importDialogBar.setIndeterminate(true);
+        importDialogBar.setProgressTintList(ColorStateList.valueOf(accent()));
+        importDialogBar.setIndeterminateTintList(ColorStateList.valueOf(accent()));
+        importDialogBar.setProgressBackgroundTintList(ColorStateList.valueOf(ink2()));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(12));
+        lp.topMargin = dp(12);
+        box.addView(importDialogBar, lp);
+        importDialogButtons = KakuViews.buttonRow(this);
+        final android.app.AlertDialog dialog = KakuViews.boxDialog(this, box, false);
+        importDialogButtons.addView(KakuViews.pill(this, getString(R.string.dict_import_background), v -> {
+            importDialogHidden = true;
+            dialog.dismiss();
+        }));
+        box.addView(importDialogButtons);
+        importDialog = dialog;
+        dialog.show();
+        KakuViews.transparentWindow(dialog);
+        shiroikuma.kaku.dict.DictImport.Progress p = shiroikuma.kaku.dict.DictImportService.Companion.getCurrent();
+        if (p != null) updateImportDialog(p);
+        else if (importDialogTitle != null) importDialogTitle.setText(R.string.dict_import_starting);
+    }
+
+    private void updateImportDialog(@NonNull shiroikuma.kaku.dict.DictImport.Progress p) {
+        if (importDialog == null || !importDialog.isShowing()) return;
+        if (importDialogTitle != null) {
+            importDialogTitle.setText(p.getTitle().isEmpty() ? getString(R.string.dict_import_copying) : p.getTitle());
+        }
+        if (importDialogDetail != null) {
+            switch (p.getPhase()) {
+                case "copy": importDialogDetail.setText(R.string.dict_import_phase_copy); break;
+                case "index": importDialogDetail.setText(R.string.dict_import_phase_index); break;
+                default: importDialogDetail.setText(getString(R.string.dict_import_phase_rows, p.getRows(), p.getBank(), p.getBanks()));
+            }
+        }
+        if (importDialogBar != null) {
+            boolean known = "rows".equals(p.getPhase()) && p.getBanks() > 0;
+            importDialogBar.setIndeterminate(!known);
+            if (known) {
+                importDialogBar.setMax(p.getBanks());
+                importDialogBar.setProgress(p.getBank());
+            }
+        }
+    }
+
+    /** The import ended: the open dialog becomes the result (or a new one says it, if it was hidden). */
+    private void finishImportDialog(@NonNull String report) {
+        importDialogHidden = false;
+        final android.app.AlertDialog dialog = importDialog;
+        if (dialog == null || !dialog.isShowing() || importDialogButtons == null) {
+            KakuViews.showInfo(this, getString(R.string.dict_import_title), report, true, null);
+            return;
+        }
+        if (importDialogTitle != null) importDialogTitle.setText(R.string.dict_import_done);
+        if (importDialogDetail != null) importDialogDetail.setText(report);
+        if (importDialogBar != null) importDialogBar.setVisibility(View.GONE);
+        importDialogButtons.removeAllViews();
+        importDialogButtons.addView(KakuViews.pill(this, getString(R.string.kaku_eim_ok), v -> dialog.dismiss()));
+        dialog.setCancelable(true);
+    }
+
+    private String importLine(shiroikuma.kaku.dict.DictImport.Progress p) {
+        switch (p.getPhase()) {
+            case "copy": return getString(R.string.dict_import_copying);
+            case "index": return getString(R.string.dict_import_indexing, p.getTitle());
+            default: return getString(R.string.dict_import_rows, p.getTitle(), p.getRows(), p.getBank(), p.getBanks());
+        }
+    }
+
+    private void sectionDictionaries() {
+        heading(getString(R.string.dict_sec), false);
+        final shiroikuma.kaku.dict.DictDb db = shiroikuma.kaku.dict.DictDb.get(this);
+        java.util.List<shiroikuma.kaku.dict.DictDb.Dictionary> dicts = db.dictionaries();
+        boolean yomitan = db.hasEnabledTerms();
+        TextView engine = body(getString(yomitan ? R.string.dict_engine_yomitan : R.string.dict_engine_bundled), 13,
+                yomitan ? ink() : KakuUi.WARN, false, false);
+        engine.setPadding(dp(IND_L1), dp(2), dp(16), dp(4));
+        page.addView(engine);
+
+        shiroikuma.kaku.dict.DictImport.Progress running = shiroikuma.kaku.dict.DictImportService.Companion.getCurrent();
+        importStatus = null;
+        if (running != null) {
+            importStatus = body(importLine(running), 13, accent(), false, true);
+            importStatus.setPadding(dp(IND_L1), dp(2), dp(16), dp(4));
+            page.addView(importStatus);
+        }
+
+        for (final shiroikuma.kaku.dict.DictDb.Dictionary d : dicts) {
+            StringBuilder sum = new StringBuilder();
+            if (d.getTerms() > 0) sum.append(getString(R.string.dict_count_terms, d.getTerms()));
+            if (d.getKanji() > 0) sum.append(sum.length() > 0 ? " · " : "").append(getString(R.string.dict_count_kanji, d.getKanji()));
+            if (d.getTermMeta() > 0) sum.append(sum.length() > 0 ? " · " : "").append(getString(R.string.dict_count_meta, d.getTermMeta()));
+            if (!d.getComplete()) sum.append(sum.length() > 0 ? " · " : "").append(getString(R.string.dict_incomplete));
+            Switch on = toggle(d.getEnabled(), v -> { db.setEnabled(d.getId(), v); rebuild(); });
+            itemRow(IND_L2, d.getTitle() + (d.getRevision().isEmpty() ? "" : "  [" + d.getRevision() + "]"), sum, on,
+                    v -> dictionaryOptions(d));
+        }
+
+        itemRow(IND_L1, getString(R.string.dict_import), getString(R.string.dict_import_desc), null, v -> {
+            Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            i.addCategory(Intent.CATEGORY_OPENABLE);
+            i.setType("*/*");
+            i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+            i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+            startActivityForResult(i, REQ_DICT);
+        });
+
+        sub(getString(R.string.dict_sub_where));
+        note(getString(R.string.dict_where_note));
+        dictUrlRow(R.string.dict_url_jmdict, "https://github.com/yomidevs/jmdict-yomitan/releases/latest/download/JMdict_english.zip");
+        dictUrlRow(R.string.dict_url_kanjidic, "https://github.com/yomidevs/jmdict-yomitan/releases/latest/download/KANJIDIC_english.zip");
+        dictUrlRow(R.string.dict_url_jmnedict, "https://github.com/yomidevs/jmdict-yomitan/releases/latest/download/JMnedict.zip");
+        dictUrlRow(R.string.dict_url_jitendex, "https://github.com/stephenmk/stephenmk.github.io/releases/latest/download/jitendex-yomitan.zip");
+        dictUrlRow(R.string.dict_url_jpdb, "https://github.com/Kuuuube/yomitan-dictionaries/releases/download/yomitan-permalink/JPDB_v2.2_Frequency_Kana.zip");
+        dictUrlRow(R.string.dict_url_bccwj, "https://github.com/Kuuuube/yomitan-dictionaries/releases/download/yomitan-permalink/BCCWJ_SUW_LUW_combined.zip");
+        dictUrlRow(R.string.dict_url_more, "https://github.com/MarvNC/yomitan-dictionaries");
+    }
+
+    private void dictUrlRow(int titleRes, final String url) {
+        View copy = KakuViews.pill(this, getString(R.string.kaku_ocr_copy_url), v -> {
+            ClipboardManager cb = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            if (cb != null) {
+                cb.setPrimaryClip(ClipData.newPlainText("url", url));
+                KakuViews.toast(this, getString(R.string.kaku_ocr_url_copied));
+            }
+        });
+        itemRow(IND_L2, getString(titleRes), url, copy, null);
+    }
+
+    /** Move up / Move down / Delete for one dictionary, as a bordered dialog of pills. */
+    private void dictionaryOptions(final shiroikuma.kaku.dict.DictDb.Dictionary d) {
+        final shiroikuma.kaku.dict.DictDb db = shiroikuma.kaku.dict.DictDb.get(this);
+        LinearLayout box = KakuViews.infoBox(this, d.getTitle(),
+                (d.getAttribution() == null ? "" : d.getAttribution() + "\n\n") + getString(R.string.dict_options_desc));
+        final android.app.AlertDialog dialog = KakuViews.boxDialog(this, box, true);
+        LinearLayout row = KakuViews.buttonRow(this);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.addView(KakuViews.pill(this, getString(R.string.dict_up), v -> { db.move(d.getId(), -1); dialog.dismiss(); rebuild(); }));
+        View gap = new View(this);
+        row.addView(gap, new LinearLayout.LayoutParams(dp(8), 0));
+        row.addView(KakuViews.pill(this, getString(R.string.dict_down), v -> { db.move(d.getId(), 1); dialog.dismiss(); rebuild(); }));
+        row.addView(new View(this), new LinearLayout.LayoutParams(0, 0, 1f));
+        row.addView(KakuViews.pill(this, getString(R.string.dict_delete), v -> {
+            dialog.dismiss();
+            KakuViews.showConfirm(this, getString(R.string.dict_delete_title, d.getTitle()), getString(R.string.dict_delete_msg),
+                    getString(R.string.dict_delete), () -> { db.delete(d.getId()); rebuild(); });
+        }));
+        box.addView(row);
+        dialog.show();
+        KakuViews.transparentWindow(dialog);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        shiroikuma.kaku.dict.DictImportService.Companion.getListeners().add(importListener);
+        // Opened (or come back to) while an import runs: its dialog is there at once.
+        if (shiroikuma.kaku.dict.DictImportService.Companion.getCurrent() != null && !importDialogHidden) {
+            scroll.post(this::showImportDialog);
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        shiroikuma.kaku.dict.DictImportService.Companion.getListeners().remove(importListener);
+        super.onStop();
+    }
+
+    // ---- Capture ---------------------------------------------------------------------------------
+
+    /** The capture box's own switches (upstream's notification toggles), in the app's settings file. */
+    private void sectionCapture() {
+        heading(getString(R.string.kaku_cap_sec), false);
+        final android.content.SharedPreferences prefs = getSharedPreferences(ca.fuwafuwa.kaku.Constants.KAKU_PREF_FILE, MODE_PRIVATE);
+        Switch instant = toggle(prefs.getBoolean(ca.fuwafuwa.kaku.Constants.KAKU_PREF_INSTANT_MODE, true), on -> {
+            prefs.edit().putBoolean(ca.fuwafuwa.kaku.Constants.KAKU_PREF_INSTANT_MODE, on).apply();
+            refreshService();
+        });
+        itemRow(IND_L1, getString(R.string.kaku_cap_instant), getString(R.string.kaku_cap_instant_desc), instant, v -> instant.toggle());
+        Switch filter = toggle(prefs.getBoolean(ca.fuwafuwa.kaku.Constants.KAKU_PREF_IMAGE_FILTER, true), on -> {
+            prefs.edit().putBoolean(ca.fuwafuwa.kaku.Constants.KAKU_PREF_IMAGE_FILTER, on).apply();
+            refreshService();
+        });
+        itemRow(IND_L1, getString(R.string.kaku_cap_filter), getString(R.string.kaku_cap_filter_desc), filter, v -> filter.toggle());
+
+        sub(getString(R.string.kaku_cap_direction));
+        String dir = prefs.getString(ca.fuwafuwa.kaku.Constants.KAKU_PREF_TEXT_DIRECTION, ca.fuwafuwa.kaku.TextDirection.AUTO.toString());
+        for (ca.fuwafuwa.kaku.TextDirection d : ca.fuwafuwa.kaku.TextDirection.values()) {
+            int label = d == ca.fuwafuwa.kaku.TextDirection.AUTO ? R.string.kaku_cap_dir_auto
+                    : d == ca.fuwafuwa.kaku.TextDirection.HORIZONTAL ? R.string.kaku_cap_dir_h : R.string.kaku_cap_dir_v;
+            itemRow(IND_L2, getString(label), null, check(d.toString().equals(dir)), v -> {
+                prefs.edit().putString(ca.fuwafuwa.kaku.Constants.KAKU_PREF_TEXT_DIRECTION, d.toString()).apply();
+                refreshService();
+                rebuild();
+            });
+        }
+        note(getString(R.string.kaku_cap_direction_note));
+    }
+
+    /** A running capture service re-reads its settings (and its notification) on a start command. */
+    private void refreshService() {
+        if (ca.fuwafuwa.kaku.MainService.IsRunning()) {
+            ca.fuwafuwa.kaku.KakuTools.startKakuService(this, new Intent(this, ca.fuwafuwa.kaku.MainService.class));
+        }
+    }
+
+    // ---- Camera ----------------------------------------------------------------------------------
+
+    private void sectionCamera() {
+        heading(getString(R.string.kaku_cam_sec), false);
+        itemRow(IND_L1, getString(R.string.kaku_cam_open), getString(R.string.kaku_cam_open_desc), null,
+                v -> shiroikuma.kaku.camera.CameraActivity.open(this));
+        Switch icon = toggle(KakuUi.b(KakuUi.CAM_LAUNCHER), on -> {
+            KakuUi.set(KakuUi.CAM_LAUNCHER, on);
+            shiroikuma.kaku.camera.CameraActivity.applyLauncherIcon(this);
+        });
+        itemRow(IND_L1, getString(R.string.kaku_cam_icon), getString(R.string.kaku_cam_icon_desc), icon, v -> icon.toggle());
+        Switch live = toggle(KakuUi.b(KakuUi.CAM_LIVE), on -> KakuUi.set(KakuUi.CAM_LIVE, on));
+        itemRow(IND_L1, getString(R.string.kaku_cam_live), getString(R.string.kaku_cam_live_desc), live, v -> live.toggle());
+        slider(R.string.kaku_cam_settle, KakuUi.CAM_LIVE_SETTLE, 250, 3000, 250,
+                v -> String.format(Locale.ROOT, "%.2f s", v / 1000f), null);
+        note(getString(R.string.kaku_cam_routes));
     }
 
     // ---- 3. Colours --------------------------------------------------------------------------------
@@ -1022,6 +1295,26 @@ public class KakuUiActivity extends Activity implements ExportImportPanel.Host {
                 uris.add(data.getData());
             }
             if (!uris.isEmpty()) importOcrFiles(uris, null);
+        } else if (requestCode == REQ_DICT && resultCode == RESULT_OK && data != null) {
+            java.util.ArrayList<Uri> uris = new java.util.ArrayList<>();
+            if (data.getClipData() != null) {
+                for (int i = 0; i < data.getClipData().getItemCount(); i++) uris.add(data.getClipData().getItemAt(i).getUri());
+            } else if (data.getData() != null) {
+                uris.add(data.getData());
+            }
+            for (Uri u : uris) {
+                try {
+                    getContentResolver().takePersistableUriPermission(u, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                } catch (Exception ignored) {
+                    // the session grant still reaches the service through the intent's ClipData
+                }
+            }
+            if (!uris.isEmpty()) {
+                shiroikuma.kaku.dict.DictImportService.Companion.start(this, uris);
+                importDialogHidden = false;
+                rebuild();
+                showImportDialog();
+            }
         } else if (requestCode == REQ_FONT && uri != null) {
             try {
                 String id = KakuFonts.importFont(this, uri);

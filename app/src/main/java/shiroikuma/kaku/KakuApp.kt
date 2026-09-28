@@ -3,6 +3,7 @@ package shiroikuma.kaku
 import android.app.Activity
 import android.app.Application
 import android.os.Bundle
+import shiroikuma.kaku.camera.CameraActivity
 
 /**
  * Loads the 白い熊 画 UI settings before anything draws, and paints every activity of the app in
@@ -14,11 +15,14 @@ class KakuApp : Application()
     {
         super.onCreate()
         KakuUi.init(this)
+        CameraActivity.applyLauncherIcon(this)
+        // A dictionary import the process died in the middle of is removed, never half-used.
+        Thread { try { shiroikuma.kaku.dict.DictDb.get(this).deleteIncomplete() } catch (ignored: Exception) {} }.start()
         registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks
         {
             override fun onActivityResumed(activity: Activity)
             {
-                if (activity !is KakuUiActivity && activity !is ProjectionConsentActivity)
+                if (activity !is KakuUiActivity && activity !is ProjectionConsentActivity && activity !is CameraActivity)
                 {
                     KakuSkin.applyToActivity(activity)
                 }

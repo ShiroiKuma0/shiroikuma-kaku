@@ -210,6 +210,12 @@ public abstract class Window implements Stoppable, WindowListener {
         params.alpha = KakuSkin.windowAlpha();
     }
 
+    /** Whether the window is on screen now. */
+    public boolean isShowing()
+    {
+        return addedToWindowManager;
+    }
+
     public void hide()
     {
         Log.d(TAG, String.format("Window.hide() for %s called, %b", this.getClass(), addedToWindowManager));

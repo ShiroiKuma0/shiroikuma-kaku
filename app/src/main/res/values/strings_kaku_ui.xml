@@ -159,6 +159,56 @@
     <string name="kaku_ocr_import_done_title" translatable="false">Import finished</string>
     <string name="kaku_ocr_import_fail_title" translatable="false">Import incomplete</string>
 
+    <!-- Dictionaries -->
+    <string name="dict_sec" translatable="false">Dictionaries</string>
+    <string name="dict_engine_yomitan" translatable="false">Lookups use the imported dictionaries below, in this order.</string>
+    <string name="dict_engine_bundled" translatable="false">No dictionary imported yet — lookups use the bundled JMdict of 2019.</string>
+    <string name="dict_count_terms" translatable="false">%1$,d terms</string>
+    <string name="dict_count_kanji" translatable="false">%1$,d kanji</string>
+    <string name="dict_count_meta" translatable="false">%1$,d frequency / pitch</string>
+    <string name="dict_incomplete" translatable="false">incomplete</string>
+    <string name="dict_import" translatable="false">Import dictionaries…</string>
+    <string name="dict_import_desc" translatable="false">Yomitan dictionary .zip files — pick one or several. A dictionary of the same title is replaced (that is how you update one).</string>
+    <string name="dict_sub_where" translatable="false">Where to get them</string>
+    <string name="dict_where_note" translatable="false">白い熊 画 has no network access: download in a browser (Copy URL), then import. The same zips work in 白い熊の辞書.</string>
+    <string name="dict_url_jmdict" translatable="false">JMdict (English) — the main dictionary, updated daily</string>
+    <string name="dict_url_kanjidic" translatable="false">KANJIDIC (English) — kanji readings, meanings, strokes</string>
+    <string name="dict_url_jmnedict" translatable="false">JMnedict — names</string>
+    <string name="dict_url_jitendex" translatable="false">Jitendex — richer JMdict (examples, notes)</string>
+    <string name="dict_url_jpdb" translatable="false">JPDB v2.2 — frequency</string>
+    <string name="dict_url_bccwj" translatable="false">BCCWJ — frequency</string>
+    <string name="dict_url_more" translatable="false">More (pitch accent, monolingual…) — MarvNC\'s list</string>
+    <string name="dict_options_desc" translatable="false">Move it up or down in the lookup order, or delete it. The switch beside it turns it off without deleting.</string>
+    <string name="dict_up" translatable="false">Up</string>
+    <string name="dict_down" translatable="false">Down</string>
+    <string name="dict_delete" translatable="false">Delete</string>
+    <string name="dict_delete_title" translatable="false">Delete %1$s?</string>
+    <string name="dict_delete_msg" translatable="false">Its terms, kanji, frequencies and tags are removed. Import the zip again to bring it back.</string>
+    <string name="dict_import_started" translatable="false">Importing %1$d file(s) — the notification shows the progress.</string>
+
+    <!-- Capture -->
+    <string name="kaku_cap_sec" translatable="false">Capture</string>
+    <string name="kaku_cap_instant" translatable="false">Instant mode</string>
+    <string name="kaku_cap_instant_desc" translatable="false">A small capture box reads as soon as you let go of it, with its result in a small popup beside it.</string>
+    <string name="kaku_cap_filter" translatable="false">Black-and-white filter (Tesseract)</string>
+    <string name="kaku_cap_filter_desc" translatable="false">Tesseract reads a thresholded copy of the capture; long-press the box and drag to set the threshold. MangaOCR always reads the capture as it is.</string>
+    <string name="kaku_cap_direction" translatable="false">Text direction (Tesseract)</string>
+    <string name="kaku_cap_dir_auto" translatable="false">Automatic (from the box\'s shape)</string>
+    <string name="kaku_cap_dir_h" translatable="false">Horizontal</string>
+    <string name="kaku_cap_dir_v" translatable="false">Vertical</string>
+    <string name="kaku_cap_direction_note" translatable="false">MangaOCR needs no direction: it reads either.</string>
+
+    <!-- Camera -->
+    <string name="kaku_cam_sec" translatable="false">Camera</string>
+    <string name="kaku_cam_open" translatable="false">Open 白い熊 画 カメラ</string>
+    <string name="kaku_cam_open_desc" translatable="false">OCR through the camera: the capture box over a full-screen camera picture. Freeze holds a frame still; tap to focus, pinch to zoom.</string>
+    <string name="kaku_cam_icon" translatable="false">Launcher icon</string>
+    <string name="kaku_cam_icon_desc" translatable="false">A second icon, 「白い熊 画 カメラ」, in the app drawer — one tap straight into the camera.</string>
+    <string name="kaku_cam_live" translatable="false">Live mode</string>
+    <string name="kaku_cam_live_desc" translatable="false">While the camera runs, the box re-reads the picture whenever it has settled, in the small popup beside the box. Also switchable in the camera view.</string>
+    <string name="kaku_cam_settle" translatable="false">Still for, before reading</string>
+    <string name="kaku_cam_routes" translatable="false">Also reachable: long-press the 白い熊 画 icon → 「カメラ」 (drag it to the home screen), the camera button on the start screen, the notification\'s Camera action, and the intent shiroikuma.kaku.action.CAMERA for 自由作業盤 / Tasker.</string>
+
     <!-- 保存復元 automation (sister-app contract v2) -->
     <string name="kaku_auto_switch" translatable="false">Automation export</string>
     <string name="kaku_auto_switch_desc" translatable="false">Let sister apps (白い熊 応用管理 · 白い熊 自由作業盤) run this export headlessly and back the data up. On by default.</string>

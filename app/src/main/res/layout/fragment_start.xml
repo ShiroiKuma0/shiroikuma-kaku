@@ -20,6 +20,17 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <ImageView
+        android:id="@+id/kaku_camera"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="8dp"
+        android:padding="10dp"
+        android:contentDescription="@string/camera_label"
+        android:src="@drawable/ic_kaku_camera"
+        app:layout_constraintEnd_toStartOf="@+id/kaku_settings"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <TextView
         android:id="@+id/kaku_logo"
         android:layout_width="wrap_content"

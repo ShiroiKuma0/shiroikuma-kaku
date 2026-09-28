@@ -14,6 +14,7 @@ import android.widget.ImageView
 import shiroikuma.kaku.KakuFork
 import shiroikuma.kaku.KakuUiActivity
 import shiroikuma.kaku.KakuUi
+import shiroikuma.kaku.camera.CameraActivity
 import java.util.*
 
 
@@ -59,6 +60,8 @@ class MainStartFragment : Fragment()
         settings.setOnClickListener { KakuUiActivity.open(mainActivity) }
         settings.setOnLongClickListener { KakuUiActivity.open(mainActivity); true }
 
+        rootView.findViewById<ImageView>(R.id.kaku_camera).setOnClickListener { CameraActivity.open(mainActivity) }
+
         if (MainService.IsRunning())
         {
             onKakuLoaded()
@@ -93,6 +96,7 @@ class MainStartFragment : Fragment()
         super.onResume()
 
         rootView.findViewById<ImageView>(R.id.kaku_settings).setColorFilter(KakuUi.i(KakuUi.C_ACCENT))
+        rootView.findViewById<ImageView>(R.id.kaku_camera).setColorFilter(KakuUi.i(KakuUi.C_ACCENT))
 
         if (!MainService.IsRunning())
         {

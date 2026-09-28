@@ -95,3 +95,5 @@ gen-external-apklibs
 .claude/settings.local.json
 app/src/main/assets/*.db-shm
 app/src/main/assets/*.db-wal
+__pycache__/
+!app/src/main/assets/yomitan/

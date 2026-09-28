@@ -432,6 +432,32 @@ class CaptureWindow(context: Context, windowCoordinator: WindowCoordinator) : Wi
         }
     }
 
+    /**
+     * Recognise what is under the box right now, without a touch: a fresh screenshot, then the
+     * instant-mode OCR, whose small result popup sits beside the box rather than over it. The
+     * camera view's live mode calls this whenever the picture has settled. Ignored while a
+     * recognition or a preview is already in flight.
+     */
+    fun recognizeNow()
+    {
+        if (mProcessingPreview || mProcessingOcr) return
+        mProcessingPreview = true
+        Thread {
+            val ocrScreenshot = screenshotForOcr
+            if (ocrScreenshot == null || ocrScreenshot.crop == null || ocrScreenshot.orig == null || ocrScreenshot.params == null)
+            {
+                mProcessingPreview = false
+                return@Thread
+            }
+            ocrScreenshot.cachedScreenshot
+            (context as MainService).handler.post {
+                mScreenshotForOcr = ocrScreenshot
+                mProcessingPreview = false
+                performOcr(true)
+            }
+        }.start()
+    }
+
     private fun setCroppedScreenshot()
     {
         val thread = Thread(Runnable {

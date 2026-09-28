@@ -70,6 +70,10 @@ dependencies {
     implementation 'androidx.documentfile:documentfile:1.1.0'
     // MangaOCR on the device (MIT) — the int8 ONNX export of kha-white/manga-ocr-base, imported by hand.
     implementation 'com.microsoft.onnxruntime:onnxruntime-android:1.27.0'
+    // 白い熊 画 カメラ — the camera view (AndroidX CameraX, open source; no Play Services).
+    implementation 'androidx.camera:camera-camera2:1.5.3'
+    implementation 'androidx.camera:camera-lifecycle:1.5.3'
+    implementation 'androidx.camera:camera-view:1.5.3'
     testImplementation 'junit:junit:4.13.2'
     // Probably just delete all these was trying to get GenerateDictionary to work as a Unit Test
     testImplementation 'com.j256.ormlite:ormlite-core:5.1'

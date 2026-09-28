@@ -129,6 +129,51 @@ All in `app/src/main/java/shiroikuma/kaku/` (ported from shiroikuma-doksho's kit
   page, and the fallback while MangaOCR is not imported or fails (`OcrRunnable.recognize`).
 - Native libraries are packed compressed (`useLegacyPackaging`): ONNX Runtime is 28 MB raw.
 
+## Yomitan dictionaries
+
+`shiroikuma/kaku/dict/`: imported Yomitan zips replace the bundled 2019 JMdict as soon as one is
+switched on (`Searcher` → `YomitanTask`; else upstream's `JmTask`).
+- `DictDb` — `files/yomitan.db` (memento's shape: dictionaries · terms · term_meta · kanji ·
+  kanji_meta · tags; glossaries deflated JSON; lookup indices dropped during an import and rebuilt).
+  A dictionary is replaced by one of the same title **or the same indexUrl** (JMdict's title carries
+  its date). Incomplete dictionaries (a dead import) are deleted at start-up (`KakuApp`).
+- `YomitanReader` (streaming, format 3 and legacy rows) → `DictImport` (batched transactions) in
+  `DictImportService` (dataSync foreground service, progress notification; files picked on the UI
+  page's Dictionaries section, which also lists / orders / disables / deletes them and shows copyable
+  URLs). Verified on the real JMdict (527,223 terms), KANJIDIC and JPDB by `YomitanReaderTest`
+  (`KAKU_DICT_DIR`).
+- `Deinflector` — Yomitan's `language-transformer.js` engine over `japanese-transforms.js`, exported
+  to `assets/yomitan/japanese-transforms.json` by `shiroikuma/yomitan/export-transforms.mjs`
+  (re-run after a Yomitan update); `DeinflectorTest` checks it against Yomitan's own output
+  (`reference-deinflections.mjs`). GPL-3 code, hence the fork's GPL-3.
+- `DictLookup` — Yomitan-style scan (prefixes ≤ 20 chars, script variants, deinflection, parts of
+  speech must agree), grouped per word, ranked (length → deinflection → frequency → score → order),
+  frequencies / pitch from term_meta, kanji from KANJIDIC. `YomitanText` renders it (structured
+  content flattened to styled text) through `DictText`.
+
+## 白い熊 画 カメラ — OCR through the camera
+
+`shiroikuma/kaku/camera/CameraActivity.kt` (approach A, agreed 2026-09-28): a full-screen CameraX
+preview under the ordinary capture box, which reads the screen as over any app — so recognition,
+result windows, candidates and dictionary are the shared ones. Freeze (preview bitmap shown, camera
+released) / Unfreeze, tap to focus, pinch zoom, light, Live (a 320×240 `ImageAnalysis` stream; once
+the picture has been still for `KakuUi.CAM_LIVE_SETTLE` ms and changed since the last read,
+`MainService.recognizeInCaptureBox()` → `CaptureWindow.recognizeNow()`: fresh screenshot, instant
+OCR, popup beside the box; skipped while the full result window is open). Starts the capture
+service itself (consent prompt) or un-hides the box. Five launch routes: the activity-alias
+`CameraLauncherAlias` (icon variant "b — camera body", `shiroikuma/icon/camera-icon.py`, switched by
+`KakuUi.CAM_LAUNCHER`, applied in `KakuApp`), the static shortcut `res/xml/shortcuts.xml`, the
+intent `shiroikuma.kaku.action.CAMERA`, the start screen's camera button, and the notification's
+Camera action (it took the Image filter slot; that switch, instant mode and text direction are now
+in the UI page's Capture section).
+
+**Fully unfolded, the camera view is landscape — by EMUI, not by us (白い熊 accepted, 2026-09-28).**
+EMUI locks the display to its natural orientation (landscape, 3184×2232, rotation 0) for any app
+while it has the camera open (`dumpsys window`: `mCameraRotationMode`; Yomiwa's task snapshot shows
+the same). No orientation request is honoured then (tried `fullSensor` and unspecified). Turning the
+picture inside the view is wrong (the picture is already right; +015 did that and was reverted in
++016). Folded and half-folded follow the phone normally.
+
 ## Hard rules of this app
 
 - **No network.** No `INTERNET` permission, no downloads, no analytics, no ads, no Google Play

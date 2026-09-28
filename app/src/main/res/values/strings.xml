@@ -37,6 +37,36 @@
     <string name="no_characters_recognized">No characters recognised.</string>
     <string name="handwrite_here">Handwrite here</string>
 
+    <!-- Camera -->
+    <string name="camera_label">白い熊 画 カメラ</string>
+    <string name="camera_short">カメラ</string>
+    <string name="camera_freeze">Freeze</string>
+    <string name="camera_unfreeze">Unfreeze</string>
+    <string name="camera_torch_on">Light: on</string>
+    <string name="camera_torch_off">Light: off</string>
+    <string name="camera_live_on">Live: on</string>
+    <string name="camera_live_off">Live: off</string>
+    <string name="camera_close">✕</string>
+    <string name="camera_permission_needed">白い熊 画 カメラ needs the camera permission.</string>
+    <string name="camera_overlay_needed">Allow 白い熊 画 to draw over other apps first — the capture box lives there.</string>
+    <string name="camera_unavailable">The camera could not start: %1$s</string>
+    <string name="notification_camera">Camera</string>
+
+    <!-- Dictionary import -->
+    <string name="dict_import_title">Dictionary import</string>
+    <string name="dict_import_channel">Dictionary import</string>
+    <string name="dict_import_starting">Starting…</string>
+    <string name="dict_import_copying">Reading the file…</string>
+    <string name="dict_import_rows">%1$s: %2$,d rows · bank %3$d/%4$d</string>
+    <string name="dict_import_indexing">%1$s: building the index…</string>
+    <string name="dict_import_ok">%1$s %2$s — %3$,d terms, %4$,d kanji, %5$,d frequency / pitch</string>
+    <string name="dict_import_failed">Import failed: %1$s</string>
+    <string name="dict_import_background">In the background</string>
+    <string name="dict_import_done">Import finished</string>
+    <string name="dict_import_phase_copy">Reading the file…</string>
+    <string name="dict_import_phase_index">All rows in — building the lookup index…</string>
+    <string name="dict_import_phase_rows">%1$,d rows · bank %2$d of %3$d</string>
+
     <!-- Tutorial -->
     <string name="tutorial_label">白い熊 画 tutorial</string>
     <string name="tut_welcome_title">Welcome to 白い熊 画!</string>

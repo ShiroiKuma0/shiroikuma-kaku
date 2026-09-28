@@ -74,6 +74,45 @@ def vector(svg_path, color, size_dp, fill=None, viewport=108):
 '''
 
 
+def camera_vector(color, size_dp=108, with_glyph=True):
+    """The 画 カメラ icon (camera-icon.py's numbers) as a VectorDrawable in one colour."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("camera_icon", os.path.join(ROOT, "shiroikuma/icon/camera-icon.py"))
+    cam = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cam)
+    paths, th, cw, ch, k = parse(NOTIF_SVG)
+    svg = open(NOTIF_SVG, encoding="utf-8").read()
+    ox, oy, _ = map(float, re.match(r"translate\(([-\d.]+),([-\d.]+)\) scale\(([-\d.]+)\)",
+                                    re.findall(r'<g transform="([^"]+)"', svg)[0]).groups())
+    tx, ty, s = cam.glyph_transform()
+    fx, fy, fr = cam.FLASH
+    glyph = ""
+    if with_glyph:
+        body = "\n".join(f'                <path android:fillColor="{color}" android:fillType="evenOdd"\n'
+                         f'                    android:pathData="{p}" />' for p in paths)
+        glyph = f"""
+    <group android:translateX="{tx:.4f}" android:translateY="{ty:.4f}" android:scaleX="{s:.6f}" android:scaleY="{s:.6f}">
+        <group android:translateX="{ox}" android:translateY="{oy}" android:scaleX="{k}" android:scaleY="{k}">
+            <group android:translateY="{th}" android:scaleX="0.1" android:scaleY="-0.1">
+{body}
+            </group>
+        </group>
+    </group>"""
+    return f"""<?xml version="1.0" encoding="utf-8"?>
+{HEADER}
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="{size_dp}dp"
+    android:height="{size_dp}dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:pathData="{cam.CAMERA_PATH}" android:strokeColor="{color}"
+        android:strokeWidth="{cam.CAMERA_STROKE}" android:strokeLineJoin="round" android:fillColor="#00000000" />
+    <path android:fillColor="{color}"
+        android:pathData="M{fx - fr},{fy} a{fr},{fr} 0 1,0 {2 * fr},0 a{fr},{fr} 0 1,0 {-2 * fr},0 Z" />{glyph}
+</vector>
+"""
+
+
 def main():
     write("drawable/ic_kaku_foreground.xml", vector(ICON_SVG, YELLOW, 108))
     write("drawable/ic_kaku_monochrome.xml", vector(ICON_SVG, BLACK, 108))
@@ -95,6 +134,19 @@ def main():
     write("mipmap-anydpi-v26/ic_launcher.xml", adaptive)
     write("mipmap-anydpi-v26/ic_launcher_round.xml", adaptive)
 
+    # 白い熊 画 カメラ — the camera launcher icon, its app shortcut, and the small camera glyph.
+    write("drawable/ic_kaku_camera_foreground.xml", camera_vector(YELLOW))
+    write("drawable/ic_kaku_camera_monochrome.xml", camera_vector(BLACK))
+    write("drawable/ic_kaku_camera.xml", camera_vector("#FFFFFFFF", 24, with_glyph=False))
+    write("mipmap-anydpi-v26/ic_launcher_camera.xml", f'''<?xml version="1.0" encoding="utf-8"?>
+{HEADER}
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/kaku_icon_background" />
+    <foreground android:drawable="@drawable/ic_kaku_camera_foreground" />
+    <monochrome android:drawable="@drawable/ic_kaku_camera_monochrome" />
+</adaptive-icon>
+''')
+
     with tempfile.TemporaryDirectory() as tmp:
         master = os.path.join(tmp, "master.png")
         subprocess.run(["rsvg-convert", "-w", "1024", "-h", "1024", ICON_SVG, "-o", master], check=True)
@@ -114,6 +166,16 @@ def main():
             masked(size, os.path.join(RES, f"mipmap-{d}/ic_launcher.png"), False)
             masked(size, os.path.join(RES, f"mipmap-{d}/ic_launcher_round.png"), True)
         masked(512, os.path.join(ROOT, "shiroikuma/icon/kaku-icon-512.png"), False)
+
+        cam_master = os.path.join(tmp, "camera.png")
+        subprocess.run(["rsvg-convert", "-w", "1024", "-h", "1024",
+                        os.path.join(ROOT, "shiroikuma/icon/kaku-camera-icon.svg"), "-o", cam_master], check=True)
+        master_saved = master
+        master = cam_master
+        for d, size in DENSITIES.items():
+            masked(size, os.path.join(RES, f"mipmap-{d}/ic_launcher_camera.png"), False)
+        masked(512, os.path.join(ROOT, "shiroikuma/icon/kaku-camera-icon-512.png"), False)
+        master = master_saved
 
 
 if __name__ == "__main__":

@@ -44,6 +44,11 @@ public class Searcher implements JmTask.SearchJmTaskDone {
 
     public void search(SearchInfo searchInfo)
     {
+        // Imported Yomitan dictionaries answer when any is switched on; the bundled 2019 JMdict otherwise.
+        if (shiroikuma.kaku.dict.DictDb.get(mContext).hasEnabledTerms()) {
+            new YomitanTask(searchInfo, this, mContext).executeOnExecutor(AsyncTask.SERIAL_EXECUTOR);
+            return;
+        }
         try {
             new JmTask(searchInfo, this, mContext).executeOnExecutor(AsyncTask.SERIAL_EXECUTOR);
         } catch (SQLException e) {

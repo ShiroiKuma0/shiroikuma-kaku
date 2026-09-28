@@ -6,6 +6,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- 白い熊 画 カメラ: OCR through the camera. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera.any" android:required="false" />
     <!-- 保存復元 automation (sister-app contract v2): the job service, and the CPU kept awake under
          a long export (EMUI otherwise dozes it with the screen off). -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
@@ -50,7 +53,41 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- Long-press the icon: 「カメラ」, pinnable to the home screen as its own one-tap shortcut. -->
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
         </activity>
+
+        <!-- 白い熊 画 カメラ — OCR through the camera. Its own task, so it opens straight into the camera
+             from the home screen; exported for 自由作業盤 / Tasker (shiroikuma.kaku.action.CAMERA). -->
+        <activity
+            android:name="shiroikuma.kaku.camera.CameraActivity"
+            android:label="@string/camera_label"
+            android:icon="@mipmap/ic_launcher_camera"
+            android:roundIcon="@mipmap/ic_launcher_camera"
+            android:taskAffinity="shiroikuma.kaku.camera"
+            android:launchMode="singleTask"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="shiroikuma.kaku.action.CAMERA" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!-- Its launcher icon — a second icon in the app drawer, switched on the UI page (on by default). -->
+        <activity-alias
+            android:name="shiroikuma.kaku.camera.CameraLauncherAlias"
+            android:targetActivity="shiroikuma.kaku.camera.CameraActivity"
+            android:label="@string/camera_label"
+            android:icon="@mipmap/ic_launcher_camera"
+            android:roundIcon="@mipmap/ic_launcher_camera"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
 
         <activity
             android:name=".TutorialActivity"
@@ -110,6 +147,12 @@
             android:authorities="${applicationId}.automation"
             android:exported="true"
             tools:ignore="ExportedContentProvider" />
+
+        <!-- Yomitan dictionary import (minutes of work: a dataSync foreground service). -->
+        <service
+            android:name="shiroikuma.kaku.dict.DictImportService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
 
         <!-- Where every automation job runs (§1 state exports and §2a data-door jobs). -->
         <service
