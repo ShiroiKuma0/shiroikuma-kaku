@@ -652,6 +652,8 @@ public class KakuUiActivity extends Activity implements ExportImportPanel.Host {
             refreshService();
         });
         itemRow(IND_L1, getString(R.string.kaku_cap_instant), getString(R.string.kaku_cap_instant_desc), instant, v -> instant.toggle());
+        slider(R.string.kaku_cap_instant_size, KakuUi.INSTANT_MAX_DP, 20, KakuUi.INSTANT_ANY, 10,
+                v -> v >= KakuUi.INSTANT_ANY ? getString(R.string.kaku_cap_instant_any) : v + " dp", null);
         Switch filter = toggle(prefs.getBoolean(ca.fuwafuwa.kaku.Constants.KAKU_PREF_IMAGE_FILTER, true), on -> {
             prefs.edit().putBoolean(ca.fuwafuwa.kaku.Constants.KAKU_PREF_IMAGE_FILTER, on).apply();
             refreshService();

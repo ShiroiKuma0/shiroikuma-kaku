@@ -10,17 +10,15 @@
 
     <LinearLayout
         android:id="@+id/instant_window_text_frame"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/bg_solid_border_corners_0_white_black_round">
 
-        <TextView
-            android:id="@+id/instant_window_text"
+        <shiroikuma.kaku.DictWebView
+            android:id="@+id/instant_window_web"
             android:layout_margin="5dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@android:color/transparent"
-            android:text="TEST"/>
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
 
     </LinearLayout>
 

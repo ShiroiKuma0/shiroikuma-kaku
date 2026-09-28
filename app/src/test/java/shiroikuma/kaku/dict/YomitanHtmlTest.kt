@@ -83,7 +83,9 @@ class YomitanHtmlTest
             f.parentFile?.mkdirs()
             f.outputStream().use { input.copyTo(it) }
         }
-        File(out).writeText(YomitanHtml.compose(theme, entries, kanji, null, mapOf(title to css)) { _, path -> YomitanHtml.mediaUrl(mediaDir, path) }
+        File(out).writeText(YomitanHtml.compose(theme, entries, kanji, null, mapOf(title to css),
+                if (System.getenv("KAKU_COMPACT") != null) YomitanHtml.Options(compact = true, maxSenses = 3)
+                else YomitanHtml.Options(back = System.getenv("KAKU_BACK"))) { _, path -> YomitanHtml.mediaUrl(mediaDir, path) }
                 .replace("<script>", "<script>window.KakuHost={height(){}};"))
     }
 }

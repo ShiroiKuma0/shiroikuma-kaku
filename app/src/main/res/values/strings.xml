@@ -34,6 +34,7 @@
     <string name="grant_ok">Grant</string>
 
     <string name="no_dictionary_entry">No dictionary entry found</string>
+    <string name="no_dictionary_entry_for">No dictionary entry for %1$s.</string>
     <string name="no_dictionary_imported">No dictionary imported yet. Open 白い熊 画 UI (long-press the cog on the start screen) → Dictionaries, and import JMdict — Copy URL shows where to get it.</string>
     <string name="first_run_title">Import the data</string>
     <string name="first_run_ocr">No OCR data yet: 白い熊 画 reads nothing until MangaOCR (recommended) or the Tesseract data is imported — OCR section.</string>
@@ -88,7 +89,7 @@
     <string name="tut_title_1">Basic usage</string>
     <string name="tut_text_1">Drag the capture window to move it. Drag its bottom-right corner to resize it — the resize area is inside the capture window. Double-tap it to start OCR and recognise the text under it.</string>
     <string name="tut_title_2">Instant mode</string>
-    <string name="tut_text_2">If instant mode is on and the capture window is fairly small, OCR starts immediately. This mode is meant for recognising words, not sentences.</string>
+    <string name="tut_text_2">If instant mode is on, OCR starts as soon as you let go of the capture window after moving or resizing it. 白い熊 画 UI → Capture can limit this to a narrow window.</string>
     <string name="tut_title_3">Quick image action — filter</string>
     <string name="tut_text_3">If the background of the text you want to recognise is translucent, adjust the image filter: long-press the capture window, then drag left or right. The image filter must be turned on.</string>
     <string name="tut_title_4">Quick text action — swap</string>

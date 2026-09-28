@@ -33,13 +33,27 @@ object YomitanHtml
                      /** A CSS font-family value; `"kaku-dict"` refers to [fontFileUrl]. */
                      val family: String, val fontFileUrl: String?)
 
-    fun page(context: Context, entries: List<DictLookup.Entry>, kanji: List<DictLookup.Kanji>, notice: String?): String
+    /** How a page is laid out: the result window's full page, or the instant popup's compact one. */
+    data class Options(
+            /** The label of a "← back" chip at the top (a cross-reference was followed); null = none. */
+            val back: String? = null,
+            /** The popup: examples, cross-references, notes and kanji tables left out, [maxSenses] kept. */
+            val compact: Boolean = false,
+            /** Definitions (and structured senses) per word; 0 = all. */
+            val maxSenses: Int = 0)
+
+    /** The href of the back chip; [shiroikuma.kaku.DictWebView] hands it to its link handler. */
+    const val BACK_URL = "kaku:back"
+
+    @JvmOverloads
+    fun page(context: Context, entries: List<DictLookup.Entry>, kanji: List<DictLookup.Kanji>, notice: String?,
+             options: Options = Options()): String
     {
         val dicts = try { DictDb.get(context).dictionaries() } catch (e: Exception) { emptyList() }
         val styles = LinkedHashMap<String, String>()
         for (d in dicts) d.styles?.let { styles[d.title] = it }
         val dirs = dicts.associate { it.title to DictDb.mediaDir(context, it.id) }
-        return compose(theme(context), entries, kanji, notice, styles) { title, path -> mediaUrl(dirs[title], path) }
+        return compose(theme(context), entries, kanji, notice, styles, options) { title, path -> mediaUrl(dirs[title], path) }
     }
 
     /** The file URL of a dictionary image, or null when it is not there (or would leave its folder). */
@@ -75,9 +89,11 @@ object YomitanHtml
 
     /** The page for [theme], with [styles] (dictionary title → its styles.css). */
     fun compose(theme: Theme, entries: List<DictLookup.Entry>, kanji: List<DictLookup.Kanji>, notice: String?,
-                styles: Map<String, String>, media: (dictionary: String, path: String) -> String? = { _, _ -> null }): String
+                styles: Map<String, String>, options: Options = Options(),
+                media: (dictionary: String, path: String) -> String? = { _, _ -> null }): String
     {
         this.media = media
+        this.options = options
         val sb = StringBuilder(16 * 1024)
         sb.append("<!doctype html><html lang=\"ja\"><head><meta charset=\"utf-8\">")
         sb.append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=no\">")
@@ -95,7 +111,9 @@ object YomitanHtml
             }
         }
         sb.append(overrideCss())
-        sb.append("</style></head><body>")
+        if (options.compact) sb.append(compactCss())
+        sb.append("</style></head><body").append(if (options.compact) " class=\"compact\"" else "").append('>')
+        options.back?.let { sb.append("<a class=\"nav-back\" href=\"").append(BACK_URL).append("\">← ").append(esc(it)).append("</a>") }
 
         if (notice != null)
         {
@@ -104,6 +122,7 @@ object YomitanHtml
         for (e in entries) entry(sb, e)
         for (k in kanji) kanji(sb, k)
         sb.append("<script>")
+        if (options.compact && options.maxSenses > 0) sb.append(compactScript(options.maxSenses))
                 .append("function h(){KakuHost.height(Math.ceil(document.documentElement.getBoundingClientRect().height));}")
                 .append("new ResizeObserver(h).observe(document.documentElement);h();")
                 .append("</script></body></html>")
@@ -112,6 +131,7 @@ object YomitanHtml
 
     /** The image resolver of the page being composed (pages are composed on the main thread). */
     private var media: (String, String) -> String? = { _, _ -> null }
+    private var options = Options()
 
     // ---- words -----------------------------------------------------------------------------------
 
@@ -148,7 +168,8 @@ object YomitanHtml
         val several = e.definitions.size > 1
         var lastDict: String? = null
         var n = 0
-        for (d in e.definitions)
+        val shown = if (options.maxSenses > 0) e.definitions.take(options.maxSenses) else e.definitions
+        for (d in shown)
         {
             if (d.dictionary != lastDict)
             {
@@ -170,6 +191,7 @@ object YomitanHtml
             glossary(sb, d.glossaryJson, d.dictionary)
             sb.append("</div></div>")
         }
+        if (shown.size < e.definitions.size) sb.append("<div class=\"more\">…</div>")
         if (lastDict != null) sb.append("</div>")
         sb.append("</section>")
     }
@@ -369,8 +391,10 @@ object YomitanHtml
         if (name == "details" && o.get("open")?.takeIf { it.isJsonPrimitive }?.asBoolean == true) sb.append(" open")
         if (name == "a")
         {
+            // "?query=…" links look the word up (the window follows them); outside links go nowhere.
             val href = o.get("href")?.takeIf { it.isJsonPrimitive }?.asString ?: ""
-            sb.append(" class=\"").append(if (href.startsWith("?")) "link-internal" else "link-external").append('"')
+            if (href.startsWith("?")) sb.append(" class=\"link-internal\" href=\"").append(escAttr(href)).append('"')
+            else sb.append(" class=\"link-external\"")
         }
         sb.append('>')
         structured(sb, o.get("content"), dictionary)
@@ -596,6 +620,8 @@ details.stats summary{color:var(--pos);font-size:.85em}
 details.stats table{border-collapse:collapse;font-size:.8em}
 details.stats th{text-align:left;font-weight:normal;color:var(--pos);padding:0 .6em 0 0}
 .notice{color:var(--warn)}
+.nav-back{display:inline-block;border:1px solid var(--pos);border-radius:999px;padding:0 .7em;margin:0 0 .5em;color:var(--text);text-decoration:none;font-size:.9em}
+.more{color:var(--pos)}
 """)
         return sb.toString()
     }
@@ -622,6 +648,40 @@ details.stats th{text-align:left;font-weight:normal;color:var(--pos);padding:0 .
 [data-dictionary] span[data-sc-content="example-keyword"] rt{font-weight:normal;color:var(--reading)}
 [data-dictionary] div[data-sc-content="example-sentence-b"]{color:var(--pos)}
 [data-dictionary] span[data-sc-content="attribution-footnote"]{color:var(--pos);font-size:.7em;vertical-align:super;margin-left:.2em}
+"""
+
+    /** The popup: the gist only — no example / note / cross-reference boxes, sources or tables; pictures stay. */
+    private fun compactCss(): String = """
+body.compact [data-sc-content="attribution"],
+body.compact [data-sc-content="forms"],
+body.compact [data-sc-content="example-sentence"],
+body.compact [data-sc-content="xref"],
+body.compact [data-sc-content="antonym"],
+body.compact [data-sc-content="sense-note"],
+body.compact [data-sc-content="info-gloss"],
+body.compact [data-sc-content="lang-source"],
+body.compact [data-sc-content="graphic-attribution"],
+body.compact details.stats,
+body.compact .pitch .chip{display:none !important}
+body.compact .hw{font-size:calc(1.35em * var(--head-scale))}
+body.compact .entry+.entry{margin-top:.5em;padding-top:.4em}
+body.compact .sc-img:not(.mono){max-height:7em !important;width:auto !important;height:auto !important}
+"""
+
+    /**
+     * The popup's sense limit inside a dictionary's own sense lists (Jitendex numbers ①② within one
+     * definition, over several part-of-speech groups): per word, senses past [max] are hidden, then
+     * groups left empty, and a "…" says there is more.
+     */
+    private fun compactScript(max: Int): String = """
+document.querySelectorAll('section.entry').forEach(function(e){
+ var n=0,cut=false;
+ e.querySelectorAll('li[data-sc-content="sense"]').forEach(function(li){if(++n>$max){li.style.display='none';cut=true;}});
+ e.querySelectorAll('li[data-sc-content="sense-group"]').forEach(function(g){
+  var any=false;g.querySelectorAll('li[data-sc-content="sense"]').forEach(function(li){if(li.style.display!=='none')any=true;});
+  if(!any&&g.querySelector('li[data-sc-content="sense"]'))g.style.display='none';});
+ if(cut&&!e.querySelector('.more')){var m=document.createElement('div');m.className='more';m.textContent='…';e.appendChild(m);}
+});
 """
 
     // ---- helpers ---------------------------------------------------------------------------------

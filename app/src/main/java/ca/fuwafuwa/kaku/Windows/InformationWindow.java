@@ -64,6 +64,11 @@ public class InformationWindow extends Window implements Searcher.SearchDictDone
     private shiroikuma.kaku.DictWebView mDictResults;
     /** The results showing, re-rendered when the look changes. */
     private List<JmSearchResult> mShownResults;
+    /** The pages a followed cross-reference left, newest last; a new lookup from the grid clears them. */
+    private final ArrayList<List<JmSearchResult>> mBackStack = new ArrayList<>();
+    private static final int BACK_MAX = 30;
+    private static final java.util.concurrent.ExecutorService LINK_LOOKUP = java.util.concurrent.Executors.newSingleThreadExecutor();
+    private final android.os.Handler mMain = new android.os.Handler(android.os.Looper.getMainLooper());
     private Searcher mSearcher;
     private boolean mTextOnlyLookup;
     private ArrayList<ISquareChar> mSearchedChars = new ArrayList<>();
@@ -79,6 +84,10 @@ public class InformationWindow extends Window implements Searcher.SearchDictDone
         mDictResults = window.findViewById(R.id.dict_web);
 
         mKanjiGrid.setDependencies(windowCoordinator, this);
+        mDictResults.setLinkHandler(url -> {
+            onLink(url);
+            return kotlin.Unit.INSTANCE;
+        });
 
         try {
             mSearcher = new Searcher(context);
@@ -183,6 +192,7 @@ public class InformationWindow extends Window implements Searcher.SearchDictDone
     public void show()
     {
         mShownResults = null;
+        mBackStack.clear();
         mDictResults.clear();
 
         window.setVisibility(View.VISIBLE);
@@ -323,6 +333,7 @@ public class InformationWindow extends Window implements Searcher.SearchDictDone
 
         if (results.size() > 0)
         {
+            mBackStack.clear();
             displayResults(results);
 
             if (search.getSquareChar().getUserTouched() && !mSearchedChars.contains(search.getSquareChar()))
@@ -357,6 +368,43 @@ public class InformationWindow extends Window implements Searcher.SearchDictDone
     private void displayResults(List<JmSearchResult> jmResults)
     {
         mShownResults = jmResults;
-        mDictResults.showPage(DictText.page(context, jmResults));
+        String back = mBackStack.isEmpty() ? null : DictText.label(mBackStack.get(mBackStack.size() - 1));
+        mDictResults.showPage(DictText.page(context, jmResults, new shiroikuma.kaku.dict.YomitanHtml.Options(back, false, 0)));
+    }
+
+    /**
+     * A link in the results: the back chip returns to the page a cross-reference left; a "See also"
+     * cross-reference ({@code ?query=…}) is looked up right here, the current page kept for back.
+     */
+    private void onLink(String url)
+    {
+        if (shiroikuma.kaku.dict.YomitanHtml.BACK_URL.equals(url)) {
+            if (mBackStack.isEmpty()) return;
+            displayResults(mBackStack.remove(mBackStack.size() - 1));
+            return;
+        }
+        final String query = shiroikuma.kaku.DictWebView.Companion.queryOf(url);
+        if (query == null) return;
+        final Context app = context.getApplicationContext();
+        LINK_LOOKUP.execute(() -> {
+            List<JmSearchResult> found;
+            try {
+                found = ca.fuwafuwa.kaku.Search.YomitanTask.Companion.results(new shiroikuma.kaku.dict.DictLookup(app), query);
+            } catch (Exception e) {
+                found = new ArrayList<>();
+            }
+            final List<JmSearchResult> results = found;
+            mMain.post(() -> {
+                if (results.isEmpty()) {
+                    shiroikuma.kaku.KakuToast.show(app, app.getString(R.string.no_dictionary_entry_for, query));
+                    return;
+                }
+                if (mShownResults != null) {
+                    mBackStack.add(mShownResults);
+                    if (mBackStack.size() > BACK_MAX) mBackStack.remove(0);
+                }
+                displayResults(results);
+            });
+        });
     }
 }

@@ -106,6 +106,12 @@ public final class KakuUi {
     /** The camera view: live mode, how long the picture must be still before it is read (ms), its launcher icon. */
     public static final String CAM_LIVE = "cam_live";
     public static final String CAM_LIVE_SETTLE = "cam_live_settle";
+    /**
+     * Instant mode reads a released box whose narrower side is at most this many dp;
+     * {@link #INSTANT_ANY} and above = any size (upstream Kaku's fixed limit was about 45 dp).
+     */
+    public static final String INSTANT_MAX_DP = "instant_max_dp";
+    public static final int INSTANT_ANY = 300;
     public static final String CAM_LAUNCHER = "cam_launcher";
 
     /** Colour-picker memory: the last colours chosen, newest first, comma-separated ARGB ints. */
@@ -206,6 +212,7 @@ public final class KakuUi {
 
         ALL.add(new Setting(CAM_LIVE, false));
         ALL.add(new Setting(CAM_LIVE_SETTLE, 600));
+        ALL.add(new Setting(INSTANT_MAX_DP, INSTANT_ANY));
         ALL.add(new Setting(CAM_LAUNCHER, true));
 
         ALL.add(new Setting(FONT_FAMILY, ""));

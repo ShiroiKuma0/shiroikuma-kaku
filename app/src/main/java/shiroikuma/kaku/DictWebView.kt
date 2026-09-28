@@ -30,6 +30,19 @@ class DictWebView @JvmOverloads constructor(context: Context, attrs: AttributeSe
     private var contentPx = 0
     private var zoom = KakuUi.i(KakuUi.DICT_ZOOM).toFloat()
     private var pinching = false
+    private var heightPending = false
+
+    /** A followed link: a "?query=…" cross-reference or [shiroikuma.kaku.dict.YomitanHtml.BACK_URL]. */
+    var linkHandler: ((String) -> Unit)? = null
+
+    /**
+     * The page's height in px, each time it changes and once after every [showPage] — for a window
+     * that sizes itself to its content (the instant popup).
+     */
+    var onContentHeight: ((Int) -> Unit)? = null
+
+    /** Sees every touch first (the popup closes its character strip on a touch). */
+    var touchObserver: ((MotionEvent) -> Unit)? = null
 
     private val scaleDetector = ScaleGestureDetector(context, object : ScaleGestureDetector.SimpleOnScaleGestureListener()
     {
@@ -72,7 +85,11 @@ class DictWebView @JvmOverloads constructor(context: Context, attrs: AttributeSe
         }
         webViewClient = object : WebViewClient()
         {
-            override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean = true
+            override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean
+            {
+                linkHandler?.invoke(request.url.toString())
+                return true
+            }
         }
         addJavascriptInterface(object
         {
@@ -81,10 +98,16 @@ class DictWebView @JvmOverloads constructor(context: Context, attrs: AttributeSe
             {
                 main.post {
                     val px = Math.ceil((cssPx * density).toDouble()).toInt()
-                    if (px != contentPx)
+                    val changed = px != contentPx
+                    if (changed)
                     {
                         contentPx = px
                         requestLayout()
+                    }
+                    if (changed || heightPending)
+                    {
+                        heightPending = false
+                        onContentHeight?.invoke(px)
                     }
                 }
             }
@@ -96,6 +119,7 @@ class DictWebView @JvmOverloads constructor(context: Context, attrs: AttributeSe
     {
         zoom = KakuUi.i(KakuUi.DICT_ZOOM).toFloat()
         settings.textZoom = zoom.toInt()
+        heightPending = true
         loadDataWithBaseURL("file:///android_asset/", html, "text/html", "utf-8", null)
         scrollTo(0, 0)
     }
@@ -124,6 +148,7 @@ class DictWebView @JvmOverloads constructor(context: Context, attrs: AttributeSe
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean
     {
+        touchObserver?.invoke(event)
         scaleDetector.onTouchEvent(event)
         if (event.pointerCount > 1 || scaleDetector.isInProgress)
         {
@@ -149,6 +174,16 @@ class DictWebView @JvmOverloads constructor(context: Context, attrs: AttributeSe
 
     companion object
     {
+        /** The word a "?query=…" cross-reference link asks for, or null. */
+        fun queryOf(url: String): String? = try
+        {
+            android.net.Uri.parse(url).getQueryParameter("query")?.takeIf { it.isNotBlank() }
+        }
+        catch (e: Exception)
+        {
+            null
+        }
+
         const val ZOOM_MIN = 50
         const val ZOOM_MAX = 300
     }

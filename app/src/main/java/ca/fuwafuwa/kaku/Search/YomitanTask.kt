@@ -14,9 +14,19 @@ class YomitanTask(private val searchInfo: SearchInfo, private val done: JmTask.S
 {
     private val lookup = DictLookup(context)
 
-    override fun doInBackground(vararg params: Void): List<JmSearchResult>
+    override fun doInBackground(vararg params: Void): List<JmSearchResult> =
+            results(lookup, searchInfo.text.substring(searchInfo.textOffset))
+
+    override fun onPostExecute(result: List<JmSearchResult>)
     {
-        val text = searchInfo.text.substring(searchInfo.textOffset)
+        done.jmTaskCallback(result, searchInfo)
+    }
+
+    companion object
+    {
+        /** The results for [text] scanned from its start — also for a followed cross-reference. */
+        fun results(lookup: DictLookup, text: String): List<JmSearchResult>
+        {
         if (text.isEmpty()) return emptyList()
         val entries = lookup.lookup(text)
         val first = String(intArrayOf(text.codePointAt(0)), 0, 1)
@@ -29,10 +39,6 @@ class YomitanTask(private val searchInfo: SearchInfo, private val done: JmTask.S
         return list.ifEmpty {
             listOf(JmSearchResult(EntryOptimized(), DeinflectionInfo(first, 0, ""), first, null, kanji))
         }
-    }
-
-    override fun onPostExecute(result: List<JmSearchResult>)
-    {
-        done.jmTaskCallback(result, searchInfo)
+        }
     }
 }

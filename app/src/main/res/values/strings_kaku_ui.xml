@@ -193,7 +193,9 @@
     <!-- Capture -->
     <string name="kaku_cap_sec" translatable="false">Capture</string>
     <string name="kaku_cap_instant" translatable="false">Instant mode</string>
-    <string name="kaku_cap_instant_desc" translatable="false">A small capture box reads as soon as you let go of it, with its result in a small popup beside it.</string>
+    <string name="kaku_cap_instant_desc" translatable="false">The capture box reads as soon as you let go of it after moving or resizing it, with its result in a small popup beside it.</string>
+    <string name="kaku_cap_instant_size" translatable="false">Instant only for a box at most this narrow</string>
+    <string name="kaku_cap_instant_any" translatable="false">Any size</string>
     <string name="kaku_cap_filter" translatable="false">Black-and-white filter (Tesseract)</string>
     <string name="kaku_cap_filter_desc" translatable="false">Tesseract reads a thresholded copy of the capture; long-press the box and drag to set the threshold. MangaOCR always reads the capture as it is.</string>
     <string name="kaku_cap_direction" translatable="false">Text direction (Tesseract)</string>

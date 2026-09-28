@@ -41,12 +41,31 @@ public final class DictText
     @NonNull
     public static String page(@NonNull Context context, @NonNull List<JmSearchResult> jmResults)
     {
+        return page(context, jmResults, new shiroikuma.kaku.dict.YomitanHtml.Options());
+    }
+
+    /** The page with {@code options} — a back chip, or the popup's compact form. */
+    @NonNull
+    public static String page(@NonNull Context context, @NonNull List<JmSearchResult> jmResults,
+                              @NonNull shiroikuma.kaku.dict.YomitanHtml.Options options)
+    {
         String notice = !jmResults.isEmpty() ? jmResults.get(0).getNotice() : null;
         java.util.List<shiroikuma.kaku.dict.DictLookup.Entry> entries = new java.util.ArrayList<>();
         for (JmSearchResult r : jmResults) if (r.getYomitan() != null) entries.add(r.getYomitan());
         List<shiroikuma.kaku.dict.DictLookup.Kanji> kanji = jmResults.isEmpty()
                 ? java.util.Collections.emptyList() : jmResults.get(0).getKanji();
-        return shiroikuma.kaku.dict.YomitanHtml.INSTANCE.page(context, entries, kanji, notice);
+        return shiroikuma.kaku.dict.YomitanHtml.INSTANCE.page(context, entries, kanji, notice, options);
+    }
+
+    /** What a result list is about, for a back chip: its first word, else its kanji. */
+    @NonNull
+    public static String label(@NonNull List<JmSearchResult> jmResults)
+    {
+        for (JmSearchResult r : jmResults) {
+            if (r.getYomitan() != null) return r.getYomitan().getExpression();
+            if (!r.getKanji().isEmpty()) return r.getKanji().get(0).getCharacter();
+        }
+        return jmResults.isEmpty() ? "" : jmResults.get(0).getWord();
     }
 
     /** As {@link #build(Context, List)}, each entry cut to {@code maxSenses} senses (0 = all). */

@@ -181,8 +181,26 @@ because the dead `JmTask` path still references it.
   `textZoom` (reflows, no panning), 50–300 %, kept quietly (`KakuUi.setQuietly`) in `dict_zoom`,
   also a slider on the UI page. The UI page's window previews use the same view with a sample entry.
   `YomitanHtmlTest.jitendexPage` renders real Jitendex entries to `KAKU_HTML_OUT` for a browser
-  check. The instant popup still uses `YomitanText` (flattened text; tag chips now spaced, a list's
-  own ①② markers kept).
+  check (`KAKU_WORDS`, `KAKU_COMPACT`, `KAKU_BACK` pick the words and the variant).
+- **Cross-references (0.1.0+023).** `?query=…` links keep their href; `DictWebView.linkHandler` →
+  `InformationWindow.onLink` looks the word up off the main thread (`YomitanTask.results`, the grid
+  untouched) and pushes the current page on a back stack (≤ 30); the page then starts with a
+  "← <previous word>" chip (`YomitanHtml.BACK_URL`). A new lookup from the grid, or hiding the
+  window, clears the stack.
+- **Instant popup (0.1.0+023)** uses the same view, `Options(compact = true, maxSenses = 3)`:
+  example / note / cross-reference boxes, forms, sources and kanji tables hidden, pictures kept
+  (capped at 7em tall), and `compactScript` cuts a dictionary's own sense lists to 3 senses per word
+  across part-of-speech groups, with a "…". The popup sizes itself from the page's reported height
+  (`DictWebView.onContentHeight` → `fitToContent`, again when pictures load), full width up to
+  400 dp. `YomitanText` / `DictText.build` are no longer used by any window.
+
+## Instant mode
+
+Upstream read a released box (after a move or resize, `CaptureWindow.onUp` → `setCroppedScreenshot`)
+only when its narrower side was ≤ `minSize * 3` ≈ 45 dp — narrower than one column of larger text,
+so on the Mate XT instant mode never fired (2026-09-28: a one-column box of book text was 158 px,
+the limit 108 px). Now the limit is `KakuUi.INSTANT_MAX_DP` (slider in 白い熊 画 UI → Capture,
+20–300 dp, 300 = `INSTANT_ANY` = any size, the default).
 
 ## 白い熊 画 カメラ — OCR through the camera
 

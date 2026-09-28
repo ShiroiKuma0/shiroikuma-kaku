@@ -20,6 +20,7 @@ import java.io.IOException
 import androidx.core.content.ContextCompat
 import ca.fuwafuwa.kaku.*
 import shiroikuma.kaku.KakuSkin
+import shiroikuma.kaku.KakuUi
 import ca.fuwafuwa.kaku.MainService
 import ca.fuwafuwa.kaku.Ocr.BoxParams
 import ca.fuwafuwa.kaku.Ocr.OcrParams
@@ -482,8 +483,12 @@ class CaptureWindow(context: Context, windowCoordinator: WindowCoordinator) : Wi
 
                 if (mPrefs!!.instantModeSetting && System.currentTimeMillis() > mLastDoubleTapTime + mLastDoubleTapIgnoreDelay)
                 {
-                    val sizeForInstant = minSize * 3
-                    if (sizeForInstant >= mScreenshotForOcr!!.params!!.width || sizeForInstant >= mScreenshotForOcr!!.params!!.height)
+                    // Upstream read only a box within ~45 dp (minSize * 3) — narrower than one column of
+                    // larger text; the limit is a setting on the UI page, "any size" by default.
+                    val limitDp = KakuUi.i(KakuUi.INSTANT_MAX_DP)
+                    val box = mScreenshotForOcr!!.params!!
+                    val narrow = minOf(box.width, box.height)
+                    if (limitDp >= KakuUi.INSTANT_ANY || narrow <= limitDp * context.resources.displayMetrics.density)
                     {
                         performOcr(true)
                     }

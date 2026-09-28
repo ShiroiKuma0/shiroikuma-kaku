@@ -45,38 +45,35 @@ class InstantInfoWindow(context: Context,
 
     private var searchedChars: MutableList<ISquareChar> = mutableListOf()
 
-    private var textInfo = window.findViewById<TextView>(R.id.instant_window_text)
+    private var web = window.findViewById<shiroikuma.kaku.DictWebView>(R.id.instant_window_web)
 
     private var textFrame = window.findViewById<LinearLayout>(R.id.instant_window_text_frame)
 
-    private var updateView = false
+    /** The largest the popup may be where it sits (set by [show]); it shrinks to its page's height. */
+    private var maxWidth = 0
+    private var maxHeight = 0
+
+    /** The results showing, re-rendered when the look changes. */
+    private var shown: List<JmSearchResult>? = null
 
     init
     {
         searcher.registerCallback(this)
 
-        textFrame.addOnLayoutChangeListener { v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
-            run {
-                if (updateView)
-                {
-                    val width = v.width + dpToPx(context, 10)
-                    val height = v.height + dpToPx(context, 10)
+        // The page says how tall it is (again when its pictures load): fit the popup to it.
+        web.onContentHeight = { px -> fitToContent(px) }
+        web.touchObserver = { e -> if (e.actionMasked == MotionEvent.ACTION_DOWN) instantKanjiWindow.hide() }
+    }
 
-                    if (isBoxHorizontal)
-                    {
-                        calcParamsForHorizontal(width, height)
-                    } else
-                    {
-                        calcParamsForVertical(width, height)
-                    }
-
-                    window.visibility = VISIBLE
-                    windowManager.updateViewLayout(window, params)
-                    updateView = false
-                    Log.d(TAG, "layoutChanged - InstantInfoWindow")
-                }
-            }
-        }
+    private fun fitToContent(px: Int)
+    {
+        if (!addedToWindowManager || maxWidth == 0) return
+        // The page, its 5 dp margins in the frame and the window's 5 dp padding around the frame.
+        val height = minOf(maxHeight, px + dpToPx(context, 20))
+        if (isBoxHorizontal) calcParamsForHorizontal(maxWidth, height) else calcParamsForVertical(maxWidth, height)
+        window.visibility = VISIBLE
+        windowManager.updateViewLayout(window, params)
+        Log.d(TAG, "fitToContent - InstantInfoWindow $px")
     }
 
     override fun onDown(e: MotionEvent): Boolean
@@ -99,9 +96,7 @@ class InstantInfoWindow(context: Context,
     {
         super.applySkin()
         textFrame.background = KakuSkin.windowPanel(context)
-        textInfo.setTextColor(KakuUi.i(KakuUi.C_DICT_TEXT))
-        textInfo.typeface = KakuSkin.dictTypeface(context)
-        textInfo.setTextSize(TypedValue.COMPLEX_UNIT_SP, KakuUi.i(KakuUi.DICT_FONT_SIZE).toFloat())
+        shown?.let { displayResults(it) }
     }
 
     override fun show()
@@ -111,7 +106,6 @@ class InstantInfoWindow(context: Context,
             if (!addedToWindowManager)
             {
                 refreshSkin()
-                textInfo.text = displayData.text
 
                 if (isBoxHorizontal)
                 {
@@ -130,6 +124,8 @@ class InstantInfoWindow(context: Context,
                     }
 
                     height = minOf(height, maxHeight)
+                    this.maxWidth = dpToPx(context, 400)
+                    this.maxHeight = height
                     calcParamsForHorizontal(dpToPx(context, 400), height)
                 } else
                 {
@@ -149,6 +145,8 @@ class InstantInfoWindow(context: Context,
                     }
 
                     width = minOf(width, maxWidth)
+                    this.maxWidth = width
+                    this.maxHeight = dpToPx(context, 600)
                     calcParamsForVertical(width, dpToPx(context, 600))
                 }
 
@@ -162,7 +160,6 @@ class InstantInfoWindow(context: Context,
     override fun jmResultsCallback(results: MutableList<JmSearchResult>, search: SearchInfo)
     {
         show()
-        updateView = true
         if (results.size > 0)
         {
             if (search.squareChar.userTouched && !searchedChars.contains(search.squareChar))
@@ -175,7 +172,9 @@ class InstantInfoWindow(context: Context,
         }
         else
         {
-            textInfo.text = context.getString(R.string.no_dictionary_entry)
+            shown = null
+            web.showPage(shiroikuma.kaku.dict.YomitanHtml.page(context, emptyList(), emptyList(),
+                    context.getString(R.string.no_dictionary_entry), shiroikuma.kaku.dict.YomitanHtml.Options(compact = true)))
         }
 
         // Highlights words in the window as long as they match
@@ -283,7 +282,8 @@ class InstantInfoWindow(context: Context,
 
     private fun displayResults(jmResults: List<JmSearchResult>)
     {
-        textInfo.text = DictText.build(context, jmResults, 3)
+        shown = jmResults
+        web.showPage(DictText.page(context, jmResults, shiroikuma.kaku.dict.YomitanHtml.Options(compact = true, maxSenses = 3)))
     }
 
 
