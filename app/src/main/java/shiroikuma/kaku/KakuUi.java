@@ -54,6 +54,7 @@ public final class KakuUi {
     public static final String DICT_FONT_WEIGHT = "dict_font_weight";
     public static final String DICT_FONT_SIZE = "dict_font_size"; // sp
     public static final String DICT_HEAD_SCALE = "dict_head_scale"; // percent of the text size
+    public static final String DICT_ZOOM = "dict_zoom"; // percent — the result window's pinch zoom
 
     // Recognised characters (the grid of OCR'd characters)
     public static final String C_CHAR_TEXT = "c_char_text";
@@ -170,6 +171,7 @@ public final class KakuUi {
         ALL.add(new Setting(DICT_FONT_WEIGHT, 400));
         ALL.add(new Setting(DICT_FONT_SIZE, 15));
         ALL.add(new Setting(DICT_HEAD_SCALE, 120));
+        ALL.add(new Setting(DICT_ZOOM, 100));
 
         ALL.add(new Setting(C_CHAR_TEXT, YELLOW));
         ALL.add(new Setting(C_CHAR_HL_FILL, YELLOW_GLASS));
@@ -271,6 +273,14 @@ public final class KakuUi {
     public static void set(String key, int value) {
         sp().edit().putInt(key, value).apply();
         changed();
+    }
+
+    /**
+     * Store without marking the look changed — for a value the showing view already applied itself
+     * (the result window's pinch zoom), so no window repaints for it.
+     */
+    public static void setQuietly(String key, int value) {
+        sp().edit().putInt(key, value).apply();
     }
 
     public static void set(String key, boolean value) {

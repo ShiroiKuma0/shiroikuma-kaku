@@ -61,7 +61,9 @@ public class InformationWindow extends Window implements Searcher.SearchDictDone
     private float mMaxFlingVelocity;
     private LinearLayout mInfoWindow;
     private KanjiGridView mKanjiGrid;
-    private TextSwitcher mDictResults;
+    private shiroikuma.kaku.DictWebView mDictResults;
+    /** The results showing, re-rendered when the look changes. */
+    private List<JmSearchResult> mShownResults;
     private Searcher mSearcher;
     private boolean mTextOnlyLookup;
     private ArrayList<ISquareChar> mSearchedChars = new ArrayList<>();
@@ -74,7 +76,7 @@ public class InformationWindow extends Window implements Searcher.SearchDictDone
         mGestureDetector = new GestureDetector(this.context, this);
         mInfoWindow = window.findViewById(R.id.info_window);
         mKanjiGrid = window.findViewById(R.id.kanji_grid);
-        mDictResults = window.findViewById(R.id.dict_results);
+        mDictResults = window.findViewById(R.id.dict_web);
 
         mKanjiGrid.setDependencies(windowCoordinator, this);
 
@@ -173,20 +175,15 @@ public class InformationWindow extends Window implements Searcher.SearchDictDone
     {
         super.applySkin();
         mInfoWindow.setBackground(KakuSkin.windowPanel(context));
-        for (int i = 0; i < mDictResults.getChildCount(); i++)
-        {
-            TextView tv = (TextView) mDictResults.getChildAt(i);
-            tv.setTextColor(KakuUi.i(KakuUi.C_DICT_TEXT));
-            tv.setTypeface(KakuSkin.dictTypeface(context));
-            tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, KakuUi.i(KakuUi.DICT_FONT_SIZE));
-        }
+        if (mShownResults != null) displayResults(mShownResults);
         mKanjiGrid.restyle();
     }
 
     @Override
     public void show()
     {
-        mDictResults.setText("");
+        mShownResults = null;
+        mDictResults.clear();
 
         window.setVisibility(View.VISIBLE);
         params.y = 0; // onScroll changes this value
@@ -359,6 +356,7 @@ public class InformationWindow extends Window implements Searcher.SearchDictDone
 
     private void displayResults(List<JmSearchResult> jmResults)
     {
-        mDictResults.setText(DictText.build(context, jmResults));
+        mShownResults = jmResults;
+        mDictResults.showPage(DictText.page(context, jmResults));
     }
 }

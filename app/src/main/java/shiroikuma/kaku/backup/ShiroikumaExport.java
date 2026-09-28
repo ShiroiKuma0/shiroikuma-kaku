@@ -99,6 +99,8 @@ public final class ShiroikumaExport {
     private static final String FONTS_PREFIX = "fonts/";
     private static final String OCR_PREFIX = "ocr/";
     private static final String DICT_PREFIX = "dictionary/";
+    /** The dictionaries' images: {@code dictionary-media/<id>/<zip path>} (files/yomitan-media). */
+    private static final String DICT_MEDIA_PREFIX = "dictionary-media/";
 
     private static final String EXTERNAL_STORAGE_AUTHORITY = "com.android.externalstorage.documents";
 
@@ -391,6 +393,11 @@ public final class ShiroikumaExport {
                             for (File f : files) {
                                 throwIfCancelled(cancel);
                                 writeFileEntry(zip, DICT_PREFIX + f.getName(), f, cancel);
+                            }
+                            File mediaRoot = shiroikuma.kaku.dict.DictDb.Companion.mediaRoot(app);
+                            for (String rel : relativeFiles(mediaRoot)) {
+                                throwIfCancelled(cancel);
+                                writeFileEntry(zip, DICT_MEDIA_PREFIX + rel, new File(mediaRoot, rel), cancel);
                             }
                             break;
                         }
@@ -693,6 +700,54 @@ public final class ShiroikumaExport {
         return n;
     }
 
+    /** Every file under {@code dir}, as '/'-separated paths relative to it. */
+    private static List<String> relativeFiles(File dir) {
+        List<String> out = new ArrayList<>();
+        collect(dir, "", out);
+        return out;
+    }
+
+    private static void collect(File dir, String prefix, List<String> out) {
+        File[] files = dir.listFiles();
+        if (files == null) return;
+        for (File f : files) {
+            if (f.isDirectory()) collect(f, prefix + f.getName() + "/", out);
+            else if (f.isFile()) out.add(prefix + f.getName());
+        }
+    }
+
+    private static boolean hasEntries(ZipFile zip, String prefix) {
+        Enumeration<? extends ZipEntry> entries = zip.entries();
+        while (entries.hasMoreElements()) if (entries.nextElement().getName().startsWith(prefix)) return true;
+        return false;
+    }
+
+    private static void deleteTree(File f) {
+        File[] kids = f.listFiles();
+        if (kids != null) for (File k : kids) deleteTree(k);
+        //noinspection ResultOfMethodCallIgnored
+        f.delete();
+    }
+
+    /** Restore the entries under {@code prefix} as a tree below {@code dir}; paths never leave it. */
+    private static int restoreTree(ZipFile zip, String prefix, File dir) throws IOException {
+        int n = 0;
+        String root = dir.getCanonicalPath() + File.separator;
+        Enumeration<? extends ZipEntry> entries = zip.entries();
+        while (entries.hasMoreElements()) {
+            ZipEntry e = entries.nextElement();
+            String name = e.getName();
+            if (e.isDirectory() || !name.startsWith(prefix)) continue;
+            File target = new File(dir, name.substring(prefix.length()));
+            if (!target.getCanonicalPath().startsWith(root)) continue;
+            try (InputStream in = zip.getInputStream(e)) {
+                writeStreamAtomic(target, in);
+            }
+            n++;
+        }
+        return n;
+    }
+
     private interface FileFilter {
         boolean ok(String name);
     }
@@ -816,6 +871,12 @@ public final class ShiroikumaExport {
                         case DICTIONARY: {
                             shiroikuma.kaku.dict.DictDb.closeInstance();   // the file is replaced under it
                             int files = restoreEntries(zip, DICT_PREFIX, dictDir(app), ShiroikumaExport::isDictName);
+                            if (hasEntries(zip, DICT_MEDIA_PREFIX) || files > 0) {
+                                // The images belong to the restored database's dictionary ids.
+                                File mediaRoot = shiroikuma.kaku.dict.DictDb.Companion.mediaRoot(app);
+                                deleteTree(mediaRoot);
+                                files += restoreTree(zip, DICT_MEDIA_PREFIX, mediaRoot);
+                            }
                             line = app.getString(R.string.kaku_eim_files_result, files);
                             break;
                         }

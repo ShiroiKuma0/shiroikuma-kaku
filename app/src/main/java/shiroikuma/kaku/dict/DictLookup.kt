@@ -28,7 +28,9 @@ class DictLookup(context: Context)
                      val frequencies: List<Frequency>, val pitches: List<Pitch>)
 
     data class Kanji(val dictionary: String, val character: String, val onyomi: String, val kunyomi: String,
-                     val meanings: List<String>, val stats: List<Pair<String, String>>, val frequencies: List<Frequency>)
+                     val meanings: List<String>, val stats: List<Pair<String, String>>, val frequencies: List<Frequency>,
+                     /** Each stat's tag category (misc, index, code, class …), parallel to [stats]. */
+                     val statCategories: List<String> = emptyList())
 
     private val app = context.applicationContext
     private val db = DictDb.get(app)
@@ -110,16 +112,19 @@ class DictLookup(context: Context)
         val meta = db.kanjiMetaFor(character)
         return db.kanjiFor(character).map { k ->
             val meanings = try { JsonParser.parseString(k.meaningsJson).asJsonArray.map { it.asString } } catch (e: Exception) { emptyList() }
+            val categories = ArrayList<String>()
             val stats = try
             {
                 JsonParser.parseString(k.statsJson).asJsonObject.entrySet().map { (name, v) ->
-                    val label = tags[k.dict]?.get(name)?.notes?.takeIf { it.isNotEmpty() } ?: name
+                    val tag = tags[k.dict]?.get(name)
+                    categories.add(tag?.category ?: "")
+                    val label = tag?.notes?.takeIf { it.isNotEmpty() } ?: name
                     label to (if (v.isJsonPrimitive) v.asString else v.toString())
                 }
             }
-            catch (e: Exception) { emptyList() }
+            catch (e: Exception) { categories.clear(); emptyList() }
             val freqs = meta.filter { it.mode == "freq" }.mapNotNull { m -> frequency(m.dataJson, null)?.let { (v, s) -> Frequency(dicts[m.dict]?.title ?: "", v, s) } }
-            Kanji(dicts[k.dict]?.title ?: "", k.character, k.onyomi, k.kunyomi, meanings, stats, freqs)
+            Kanji(dicts[k.dict]?.title ?: "", k.character, k.onyomi, k.kunyomi, meanings, stats, freqs, categories)
         }
     }
 

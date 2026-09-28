@@ -4,4 +4,6 @@
     <item name="kaku_skin_role" type="id" />
     <!-- KanjiChoiceWindow: the character an image tile restores (the original recognition). -->
     <item name="kaku_choice_original" type="id" />
+    <!-- KakuUiActivity: a window preview's dictionary view, kept across its refreshes. -->
+    <item name="kaku_preview_web" type="id" />
 </resources>

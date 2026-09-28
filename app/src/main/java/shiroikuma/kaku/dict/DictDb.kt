@@ -19,6 +19,8 @@ import java.util.zip.Inflater
  */
 class DictDb private constructor(context: Context) : SQLiteOpenHelper(context.applicationContext, NAME, null, VERSION)
 {
+    private val app: Context = context.applicationContext
+
     data class Dictionary(val id: Long, val title: String, val revision: String, val format: Int,
                           val enabled: Boolean, val priority: Int, val terms: Int, val termMeta: Int, val kanji: Int,
                           val kanjiMeta: Int, val attribution: String?, val downloadUrl: String?, val styles: String?,
@@ -126,12 +128,18 @@ class DictDb private constructor(context: Context) : SQLiteOpenHelper(context.ap
         {
             db.endTransaction()
         }
+        mediaDir(app, id).deleteRecursively()
     }
 
-    /** Dictionaries an interrupted import left half-written: removed at start-up. */
+    /**
+     * Dictionaries an interrupted import left half-written: removed at start-up — and media
+     * folders no dictionary owns any more.
+     */
     fun deleteIncomplete()
     {
         for (d in dictionaries()) if (!d.complete) delete(d.id)
+        val ids = dictionaries().map { it.id.toString() }.toSet()
+        mediaRoot(app).listFiles()?.forEach { if (it.name !in ids) it.deleteRecursively() }
     }
 
     private fun nextPriority(): Int =
@@ -282,6 +290,12 @@ class DictDb private constructor(context: Context) : SQLiteOpenHelper(context.ap
     companion object
     {
         const val NAME = "yomitan.db"
+        const val MEDIA_DIR = "yomitan-media"
+
+        /** Every dictionary's images, a folder per dictionary id: `files/yomitan-media/<id>/<zip path>`. */
+        fun mediaRoot(context: Context) = java.io.File(context.applicationContext.filesDir, MEDIA_DIR)
+
+        fun mediaDir(context: Context, id: Long) = java.io.File(mediaRoot(context), id.toString())
         private const val VERSION = 1
 
         private val INDICES = linkedMapOf(

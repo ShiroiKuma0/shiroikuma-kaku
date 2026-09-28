@@ -160,8 +160,29 @@ because the dead `JmTask` path still references it.
   (`reference-deinflections.mjs`). GPL-3 code, hence the fork's GPL-3.
 - `DictLookup` — Yomitan-style scan (prefixes ≤ 20 chars, script variants, deinflection, parts of
   speech must agree), grouped per word, ranked (length → deinflection → frequency → score → order),
-  frequencies / pitch from term_meta, kanji from KANJIDIC. `YomitanText` renders it (structured
-  content flattened to styled text) through `DictText`.
+  frequencies / pitch from term_meta, kanji from KANJIDIC.
+- **Display (since 0.1.0+021).** The result window (`InformationWindow`) shows `YomitanHtml` pages in
+  `DictWebView`: structured content rendered as Yomitan renders it (`data-sc-*`, whitelisted inline
+  styles, ruby, tables, details), each dictionary's `styles.css` inside `@scope ([data-dictionary=…])`,
+  then a theme layer (`overrideCss`, `!important`) that repaints tag chips, extra boxes, links and
+  example keywords in the UI page's dictionary colours — 白い熊's choice: chips follow our theme, not
+  Jitendex's grey/brown/purple. Headword furigana (`furigana`, a simplified distributeFurigana), a
+  pitch graph per pitch-dictionary position (`morae` / `pattern`), frequency chips, KANJIDIC stats
+  grouped by tag category (misc as chips, the rest in `<details>`). Links never navigate.
+- **Images (since 0.1.0+022).** `DictImport.copyMedia` extracts a dictionary's image files
+  (`YomitanReader.isMedia`, by extension) to `files/yomitan-media/<dict id>/<zip path>` (paths
+  checked to stay inside); `DictDb.delete` removes the folder, `deleteIncomplete` also orphan
+  folders; Export/Import carries them as `dictionary-media/…` (restored after wiping the folder, as
+  they belong to the restored database's ids). `YomitanHtml.image` draws them after Yomitan:
+  preferred size else own, em or px per `sizeUnits`, `monochrome` as a CSS mask in `currentColor`
+  (Jitendex's HanaMinA rare-kanji glyphs), others as `<img>` with a text-colour backdrop when
+  `background`; a missing file shows the alt text. Jitendex 2026-08-11: 250 files, 5 MB. The view is as tall as its content (the
+  page reports its height to `KakuHost.height`), capped by the window. **Pinch to zoom** scales
+  `textZoom` (reflows, no panning), 50–300 %, kept quietly (`KakuUi.setQuietly`) in `dict_zoom`,
+  also a slider on the UI page. The UI page's window previews use the same view with a sample entry.
+  `YomitanHtmlTest.jitendexPage` renders real Jitendex entries to `KAKU_HTML_OUT` for a browser
+  check. The instant popup still uses `YomitanText` (flattened text; tag chips now spaced, a list's
+  own ①② markers kept).
 
 ## 白い熊 画 カメラ — OCR through the camera
 

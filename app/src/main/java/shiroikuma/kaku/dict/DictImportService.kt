@@ -74,7 +74,9 @@ class DictImportService : Service()
                             for (l in listeners) main.post { l.onProgress(p) }
                         }
                     }
-                    report.append(getString(R.string.dict_import_ok, r.title, r.revision, r.terms, r.kanji, r.termMeta)).append('\n')
+                    report.append(getString(R.string.dict_import_ok, r.title, r.revision, r.terms, r.kanji, r.termMeta))
+                    if (r.media > 0) report.append(getString(R.string.dict_import_ok_media, r.media))
+                    report.append('\n')
                 }
                 catch (e: Throwable)
                 {
@@ -111,6 +113,7 @@ class DictImportService : Service()
         {
             "copy" -> getString(R.string.dict_import_copying)
             "index" -> getString(R.string.dict_import_indexing, p.title)
+            "media" -> getString(R.string.dict_import_media, p.title, p.bank, p.banks)
             else -> getString(R.string.dict_import_rows, p.title, p.rows, p.bank, p.banks)
         }
         getSystemService(NotificationManager::class.java)?.notify(NOTIFICATION_ID, notification(text, p.bank, p.banks))

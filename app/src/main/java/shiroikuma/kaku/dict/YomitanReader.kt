@@ -20,7 +20,8 @@ import java.util.zip.ZipFile
  * sequence, termTags]`, `term_meta_bank_N.json` `[term, mode (freq|pitch|ipa), data]`,
  * `kanji_bank_N.json` `[character, onyomi, kunyomi, tags, meanings[], stats{}]`,
  * `kanji_meta_bank_N.json`, `tag_bank_N.json` `[name, category, order, notes, score]`, plus
- * `styles.css`. Images are not read (the renderer shows text).
+ * `styles.css`, and the media files the structured content points at (images, by their path in the
+ * zip — see [media]).
  */
 class YomitanReader(private val zipFile: File)
 {
@@ -65,6 +66,26 @@ class YomitanReader(private val zipFile: File)
         ZipFile(zipFile).use { zip ->
             val e = zip.getEntry("styles.css") ?: return null
             return zip.getInputStream(e).use { it.readBytes().toString(Charsets.UTF_8) }
+        }
+    }
+
+    /** The image files in the zip (by extension), as their zip paths. */
+    fun mediaPaths(): List<String>
+    {
+        ZipFile(zipFile).use { zip ->
+            return zip.entries().asSequence().filter { !it.isDirectory && isMedia(it.name) }.map { it.name }.toList()
+        }
+    }
+
+    /** Hands each image file to [consumer] with its zip path; [consumer] must read the stream at once. */
+    fun media(consumer: (path: String, input: java.io.InputStream) -> Unit)
+    {
+        ZipFile(zipFile).use { zip ->
+            for (e in zip.entries())
+            {
+                if (e.isDirectory || !isMedia(e.name)) continue
+                zip.getInputStream(e).use { consumer(e.name, it) }
+            }
         }
     }
 
@@ -139,6 +160,10 @@ class YomitanReader(private val zipFile: File)
     companion object
     {
         private val BANK = Regex("(term|term_meta|kanji|kanji_meta|tag)_bank_(\\d+)\\.json")
+
+        private val MEDIA = setOf("png", "jpg", "jpeg", "gif", "webp", "avif", "svg", "bmp", "ico", "tif", "tiff", "apng")
+
+        fun isMedia(name: String): Boolean = name.substringAfterLast('.', "").lowercase() in MEDIA
 
         private fun bankOrder(name: String) = when (BANK.matchEntire(name)!!.groupValues[1])
         {

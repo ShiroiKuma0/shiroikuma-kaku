@@ -196,7 +196,11 @@ object YomitanText
                         for (li in items)
                         {
                             newline(sb)
-                            sb.append(if (tag == "ol") "${++n}. " else "• ")
+                            // A list's own marker (Jitendex numbers its senses ①②) wins over ours.
+                            val marker = ((li as? JsonObject)?.get("style") as? JsonObject)?.get("listStyleType")?.asString
+                                    ?.trim('"', '\'')?.takeIf { it.isNotEmpty() && it != "none" && !it.matches(Regex("[a-z-]+")) }
+                            ++n
+                            sb.append(if (marker != null) "$marker " else if (tag == "ol") "$n. " else "• ")
                             structured(sb, (li as? JsonObject)?.get("content") ?: li, dim)
                         }
                     }
@@ -212,7 +216,12 @@ object YomitanText
                         }
                         else structured(sb, content, dim)
                     }
-                    else -> structured(sb, content, dim)
+                    else ->
+                    {
+                        structured(sb, content, dim)
+                        // Tag chips (Jitendex's "1-dan", "transitive") must not run together.
+                        if ((o.get("data") as? JsonObject)?.get("class")?.asString == "tag" && sb.length > start) sb.append(' ')
+                    }
                 }
                 if (dataContent in DIM_CONTENT && sb.length > start)
                 {

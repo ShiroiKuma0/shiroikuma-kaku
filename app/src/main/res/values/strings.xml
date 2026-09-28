@@ -70,6 +70,9 @@
     <string name="dict_import_failed">Import failed: %1$s</string>
     <string name="dict_import_background">In the background</string>
     <string name="dict_import_done">Import finished</string>
+    <string name="dict_import_media">%1$s: images %2$d of %3$d…</string>
+    <string name="dict_import_phase_media">Copying the images · %1$d of %2$d</string>
+    <string name="dict_import_ok_media">\u0020· %1$,d images</string>
     <string name="dict_import_phase_copy">Reading the file…</string>
     <string name="dict_import_phase_index">All rows in — building the lookup index…</string>
     <string name="dict_import_phase_rows">%1$,d rows · bank %2$d of %3$d</string>

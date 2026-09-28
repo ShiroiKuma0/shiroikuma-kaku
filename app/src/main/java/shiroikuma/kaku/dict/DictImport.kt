@@ -27,7 +27,7 @@ object DictImport
     }
 
     class Result(val title: String, val revision: String, val terms: Int, val termMeta: Int, val kanji: Int,
-                 val kanjiMeta: Int, val tags: Int)
+                 val kanjiMeta: Int, val tags: Int, val media: Int = 0)
 
     @Throws(IOException::class)
     fun import(context: Context, uri: Uri, listener: Listener?): Result
@@ -161,7 +161,38 @@ object DictImport
             for (s in listOf(term, termMeta, kanji, kanjiMeta, tag)) s.close()
             if (!ok) dictDb.delete(id)
         }
+        // The images the structured content points at, under files/yomitan-media/<id>/<zip path>.
+        val nMedia = try
+        {
+            copyMedia(context, reader, id, index.title, listener)
+        }
+        catch (e: Throwable)
+        {
+            dictDb.delete(id)
+            throw e
+        }
         dictDb.finishDictionary(id, nTerms, nTermMeta, nKanji, nKanjiMeta, nTags)
-        return Result(index.title, index.revision, nTerms, nTermMeta, nKanji, nKanjiMeta, nTags)
+        return Result(index.title, index.revision, nTerms, nTermMeta, nKanji, nKanjiMeta, nTags, nMedia)
+    }
+
+    private fun copyMedia(context: Context, reader: YomitanReader, id: Long, title: String, listener: Listener?): Int
+    {
+        val total = reader.mediaPaths().size
+        if (total == 0) return 0
+        val dir = DictDb.mediaDir(context, id)
+        dir.deleteRecursively()
+        val root = dir.canonicalPath + File.separator
+        var n = 0
+        listener?.onProgress(Progress(title, 0, total, 0, "media"))
+        reader.media { path, input ->
+            val target = File(dir, path)
+            // A zip path never leaves the dictionary's folder.
+            if (!target.canonicalPath.startsWith(root)) return@media
+            target.parentFile?.mkdirs()
+            target.outputStream().use { input.copyTo(it, 64 * 1024) }
+            n++
+            if (n % 20 == 0 || n == total) listener?.onProgress(Progress(title, n, total, 0, "media"))
+        }
+        return n
     }
 }

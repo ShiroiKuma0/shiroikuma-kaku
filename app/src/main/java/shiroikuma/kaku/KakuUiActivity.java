@@ -503,11 +503,12 @@ public class KakuUiActivity extends Activity implements ExportImportPanel.Host {
             switch (p.getPhase()) {
                 case "copy": importDialogDetail.setText(R.string.dict_import_phase_copy); break;
                 case "index": importDialogDetail.setText(R.string.dict_import_phase_index); break;
+                case "media": importDialogDetail.setText(getString(R.string.dict_import_phase_media, p.getBank(), p.getBanks())); break;
                 default: importDialogDetail.setText(getString(R.string.dict_import_phase_rows, p.getRows(), p.getBank(), p.getBanks()));
             }
         }
         if (importDialogBar != null) {
-            boolean known = "rows".equals(p.getPhase()) && p.getBanks() > 0;
+            boolean known = ("rows".equals(p.getPhase()) || "media".equals(p.getPhase())) && p.getBanks() > 0;
             importDialogBar.setIndeterminate(!known);
             if (known) {
                 importDialogBar.setMax(p.getBanks());
@@ -536,6 +537,7 @@ public class KakuUiActivity extends Activity implements ExportImportPanel.Host {
         switch (p.getPhase()) {
             case "copy": return getString(R.string.dict_import_copying);
             case "index": return getString(R.string.dict_import_indexing, p.getTitle());
+            case "media": return getString(R.string.dict_import_media, p.getTitle(), p.getBank(), p.getBanks());
             default: return getString(R.string.dict_import_rows, p.getTitle(), p.getRows(), p.getBank(), p.getBanks());
         }
     }
@@ -798,6 +800,8 @@ public class KakuUiActivity extends Activity implements ExportImportPanel.Host {
         slider(R.string.kaku_ui_font_size, KakuUi.DICT_FONT_SIZE, 10, 32, 1, v -> v + " sp",
                 () -> refreshWindow(dictPv[0]));
         slider(R.string.kaku_ui_head_scale, KakuUi.DICT_HEAD_SCALE, 100, 200, 10, v -> v + " %",
+                () -> refreshWindow(dictPv[0]));
+        slider(R.string.kaku_ui_dict_zoom, KakuUi.DICT_ZOOM, DictWebView.ZOOM_MIN, DictWebView.ZOOM_MAX, 10, v -> v + " %",
                 () -> refreshWindow(dictPv[0]));
         dictPv[0] = windowPreview();
         preview(dictPv[0]);
@@ -1133,36 +1137,37 @@ public class KakuUiActivity extends Activity implements ExportImportPanel.Host {
         box.setBackground(KakuSkin.windowPanel(this));
         box.setAlpha(KakuSkin.windowAlpha());
         box.addView(charRow());
-        TextView dict = new TextView(this);
-        dict.setTag(KakuViews.NO_SKIN);
-        dict.setTypeface(KakuSkin.dictTypeface(this));
-        dict.setTextSize(TypedValue.COMPLEX_UNIT_SP, KakuUi.i(KakuUi.DICT_FONT_SIZE));
-        dict.setTextColor(KakuUi.i(KakuUi.C_DICT_TEXT));
-        dict.setText(sampleEntry());
-        dict.setPadding(0, dp(6), 0, 0);
-        box.addView(dict);
+        // The result window's own renderer, one view per preview kept across refreshes.
+        DictWebView web = (DictWebView) box.getTag(R.id.kaku_preview_web);
+        if (web == null) {
+            web = new DictWebView(this);
+            web.setTag(KakuViews.NO_SKIN);
+            box.setTag(R.id.kaku_preview_web, web);
+        }
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.topMargin = dp(6);
+        box.addView(web, lp);
+        web.showPage(shiroikuma.kaku.dict.YomitanHtml.INSTANCE.page(this, sampleEntries(),
+                java.util.Collections.emptyList(), null));
     }
 
-    /** The dictionary entry of the previews, styled as DictText styles real results. */
-    private CharSequence sampleEntry() {
-        SpannableStringBuilder sb = new SpannableStringBuilder();
-        int headPx = Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP,
-                KakuUi.i(KakuUi.DICT_FONT_SIZE) * KakuUi.i(KakuUi.DICT_HEAD_SCALE) / 100f,
-                getResources().getDisplayMetrics()));
-        int s = sb.length();
-        sb.append(getString(R.string.kaku_ui_pv_headword));
-        sb.setSpan(new ForegroundColorSpan(KakuUi.i(KakuUi.C_DICT_HEADWORD)), s, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        sb.setSpan(new AbsoluteSizeSpan(headPx), s, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        sb.setSpan(new KakuTypefaceSpan(KakuSkin.dictHeadTypeface(this)), s, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        s = sb.length();
-        sb.append(getString(R.string.kaku_ui_pv_reading));
-        sb.setSpan(new ForegroundColorSpan(KakuUi.i(KakuUi.C_DICT_READING)), s, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        sb.append("\n① ");
-        s = sb.length();
-        sb.append(getString(R.string.kaku_ui_pv_pos));
-        sb.setSpan(new ForegroundColorSpan(KakuUi.i(KakuUi.C_DICT_POS)), s, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        sb.append(getString(R.string.kaku_ui_pv_meaning));
-        return sb;
+    /** The previews' dictionary entry: 食べる, as the result window shows a real one. */
+    private java.util.List<shiroikuma.kaku.dict.DictLookup.Entry> sampleEntries() {
+        String dict = getString(R.string.kaku_ui_pv_dict);
+        java.util.List<shiroikuma.kaku.dict.DictLookup.Definition> defs = new java.util.ArrayList<>();
+        defs.add(new shiroikuma.kaku.dict.DictLookup.Definition(dict, 0, "v1 vt", "★", "v1", 0,
+                "[\"to eat\"]", 1L));
+        defs.add(new shiroikuma.kaku.dict.DictLookup.Definition(dict, 0, "v1 vt", "★", "v1", 0,
+                "[\"to live on (e.g. a salary)\",\"to live off\",\"to subsist on\"]", 2L));
+        java.util.List<shiroikuma.kaku.dict.DictLookup.Frequency> freqs = new java.util.ArrayList<>();
+        freqs.add(new shiroikuma.kaku.dict.DictLookup.Frequency("JPDB", 184L, "184"));
+        java.util.List<shiroikuma.kaku.dict.DictLookup.Pitch> pitches = new java.util.ArrayList<>();
+        pitches.add(new shiroikuma.kaku.dict.DictLookup.Pitch("NHK", "たべる", java.util.Collections.singletonList("2")));
+        java.util.List<shiroikuma.kaku.dict.DictLookup.Entry> out = new java.util.ArrayList<>();
+        out.add(new shiroikuma.kaku.dict.DictLookup.Entry("食べる", "たべる", "食べて",
+                java.util.Collections.singletonList("-て"), defs, freqs, pitches));
+        return out;
     }
 
     /** A row of recognised characters, the looked-up word highlighted, one cell showing a swipe icon. */

@@ -34,6 +34,21 @@ public final class DictText
         return build(context, jmResults, 0);
     }
 
+    /**
+     * The results as the result window's HTML page ({@link shiroikuma.kaku.dict.YomitanHtml}); the
+     * notice (no dictionary imported) is a page of its own.
+     */
+    @NonNull
+    public static String page(@NonNull Context context, @NonNull List<JmSearchResult> jmResults)
+    {
+        String notice = !jmResults.isEmpty() ? jmResults.get(0).getNotice() : null;
+        java.util.List<shiroikuma.kaku.dict.DictLookup.Entry> entries = new java.util.ArrayList<>();
+        for (JmSearchResult r : jmResults) if (r.getYomitan() != null) entries.add(r.getYomitan());
+        List<shiroikuma.kaku.dict.DictLookup.Kanji> kanji = jmResults.isEmpty()
+                ? java.util.Collections.emptyList() : jmResults.get(0).getKanji();
+        return shiroikuma.kaku.dict.YomitanHtml.INSTANCE.page(context, entries, kanji, notice);
+    }
+
     /** As {@link #build(Context, List)}, each entry cut to {@code maxSenses} senses (0 = all). */
     @NonNull
     public static CharSequence build(@NonNull Context context, @NonNull List<JmSearchResult> jmResults, int maxSenses)

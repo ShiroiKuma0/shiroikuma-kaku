@@ -71,6 +71,7 @@
     <string name="kaku_ui_font_size" translatable="false">Size</string>
     <string name="kaku_ui_font_scale" translatable="false">Size</string>
     <string name="kaku_ui_head_scale" translatable="false">Headword size</string>
+    <string name="kaku_ui_dict_zoom" translatable="false">Result window zoom (pinch the results)</string>
     <string name="kaku_ui_head_sample" translatable="false">Colours · 見出し</string>
     <string name="kaku_font_system" translatable="false">System default</string>
     <string name="kaku_font_sample" translatable="false">AaIiMmOoQqWw 012 白い熊 画 漢字かなカナ</string>
@@ -88,6 +89,7 @@
     <string name="kaku_ui_pv_headword" translatable="false">食べる</string>
     <string name="kaku_ui_pv_reading" translatable="false"> (たべる)</string>
     <string name="kaku_ui_pv_pos" translatable="false">(v1,vt) </string>
+    <string name="kaku_ui_pv_dict" translatable="false">Sample dictionary</string>
     <string name="kaku_ui_pv_meaning" translatable="false">to eat ② (v1,vt) to live on (e.g. a salary)</string>
     <string name="kaku_ui_pv_chars" translatable="false">猫が魚を食べる</string>
     <string name="kaku_ui_pv_choices" translatable="false">画面ガ力</string>
