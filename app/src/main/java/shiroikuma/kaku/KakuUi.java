@@ -97,6 +97,11 @@ public final class KakuUi {
     public static final String HEAD_FONT_WEIGHT = "head_font_weight";
     public static final String HEAD_FONT_SIZE = "head_font_size"; // sp
 
+    /** The OCR engine: {@link #ENGINE_MANGAOCR} (falls back to Tesseract until its model is imported) or {@link #ENGINE_TESSERACT}. */
+    public static final String OCR_ENGINE = "ocr_engine";
+    public static final String ENGINE_MANGAOCR = "mangaocr";
+    public static final String ENGINE_TESSERACT = "tesseract";
+
     /** Colour-picker memory: the last colours chosen, newest first, comma-separated ARGB ints. */
     public static final String RECENT_COLORS = "recent_colors";
     public static final int MAX_RECENT = 8;
@@ -189,6 +194,8 @@ public final class KakuUi {
         ALL.add(new Setting(C_DLG_BORDER, YELLOW));
         ALL.add(new Setting(DLG_BORDER_W, 20));
         ALL.add(new Setting(DLG_RADIUS, 8));
+
+        ALL.add(new Setting(OCR_ENGINE, ENGINE_MANGAOCR));
 
         ALL.add(new Setting(FONT_FAMILY, ""));
         ALL.add(new Setting(FONT_WEIGHT, 400));

@@ -113,6 +113,22 @@ All in `app/src/main/java/shiroikuma/kaku/` (ported from shiroikuma-doksho's kit
   (switch · token switch · token) sit in the UI page's Export / Import section. No preference this
   app restores is security-relevant; `requires_permissions` is `[]` (own prefs and files only).
 
+## OCR engines
+
+- **MangaOCR** (default) — `shiroikuma/kaku/ocr/MangaOcr.kt`: kha-white/manga-ocr-base as
+  onnx-community/manga-ocr-base-ONNX's int8 `encoder_model_quantized.onnx` + `decoder_model_quantized.onnx`
+  and kha-white's `vocab.txt`, on ONNX Runtime Android 1.27 (CPU, 4 threads). Files imported by hand
+  on the UI page (OCR section; URLs copyable) into `files/tessdata` as `mangaocr-encoder.onnx`,
+  `mangaocr-decoder.onnx`, `mangaocr-vocab.txt` (`OcrImport`: `.part`, checked in ORT / 6144 lines,
+  then renamed) — the Export / Import OCR category carries them. Pipeline verified on the desktop
+  against the PyTorch model (ORT 1.27 and 1.30, identical text): gray → RGB, bilinear 224², (v/255−0.5)/0.5,
+  greedy decode from 2 to 3, ≤ 300 tokens, whole prefix per step (no KV cache). Top-8 softmax
+  candidates per character feed the kanji-choice window; no positions, so each character's picture
+  is the whole capture. It reads the unfiltered capture.
+- **Tesseract 5** (Tesseract4Android, legacy engine, bundled `jpn.traineddata`) — chosen on the UI
+  page, and the fallback while MangaOCR is not imported or fails (`OcrRunnable.recognize`).
+- Native libraries are packed compressed (`useLegacyPackaging`): ONNX Runtime is 28 MB raw.
+
 ## Hard rules of this app
 
 - **No network.** No `INTERNET` permission, no downloads, no analytics, no ads, no Google Play

@@ -21,6 +21,8 @@ import ca.fuwafuwa.kaku.Windows.Data.ChoiceCertainty
 import ca.fuwafuwa.kaku.Windows.Data.DisplayDataOcr
 import ca.fuwafuwa.kaku.Windows.Data.ISquareChar
 import ca.fuwafuwa.kaku.Windows.Data.SquareCharOcr
+import shiroikuma.kaku.KakuUi
+import shiroikuma.kaku.ocr.MangaOcr
 
 /**
  * Created by 0xbad1d3a5 on 4/16/2016.
@@ -97,12 +99,9 @@ class OcrRunnable(context: Context, private var mCaptureWindow: CaptureWindow?) 
 
                     mCaptureWindow!!.showLoadingAnimation()
 
-                    mTessBaseAPI!!.setImage(mOcrParams!!.bitmap)
-                    mTessBaseAPI!!.getHOCRText(0)
-                    val displayData = getDisplayData(mOcrParams!!, mTessBaseAPI!!.resultIterator)
+                    val displayData = recognize(mOcrParams!!)
                     processDisplayData(displayData)
                     for (c in displayData.squareChars) (c as? SquareCharOcr)?.let { it.originalChar = it.char }
-                    mTessBaseAPI!!.clear()
 
                     if (displayData.text.length > 0)
                     {
@@ -243,6 +242,49 @@ class OcrRunnable(context: Context, private var mCaptureWindow: CaptureWindow?) 
                 squareChar.addChoice("一", ChoiceCertainty.CERTAIN)
             }
         }
+    }
+
+    /**
+     * MangaOCR when it is the chosen engine and its model is imported (UI page → OCR); Tesseract
+     * otherwise, and as the fallback whenever MangaOCR cannot run.
+     */
+    private fun recognize(ocrParams: OcrParams): DisplayDataOcr
+    {
+        if (KakuUi.s(KakuUi.OCR_ENGINE) == KakuUi.ENGINE_MANGAOCR && MangaOcr.installed(mContext))
+        {
+            try
+            {
+                return getDisplayDataMangaOcr(ocrParams)
+            }
+            catch (e: Throwable)
+            {
+                Log.w(TAG, "MangaOCR failed, falling back to Tesseract", e)
+            }
+        }
+        mTessBaseAPI!!.setImage(ocrParams.bitmap)
+        mTessBaseAPI!!.getHOCRText(0)
+        val displayData = getDisplayData(ocrParams, mTessBaseAPI!!.resultIterator)
+        mTessBaseAPI!!.clear()
+        return displayData
+    }
+
+    /**
+     * MangaOCR reads the capture as it is (not the black-and-white filtered image: the model was
+     * trained on real pages) and returns characters with candidates but no positions — each
+     * character's picture in the kanji-choice window is therefore the whole capture.
+     */
+    private fun getDisplayDataMangaOcr(ocrParams: OcrParams): DisplayDataOcr
+    {
+        val bitmap = ocrParams.originalBitmap
+        val ocrChars = ArrayList<SquareCharOcr>()
+        val displayData = DisplayDataOcr(bitmap, ocrParams.box, ocrParams.instantMode, ocrChars)
+        val whole = intArrayOf(0, 0, bitmap.width, bitmap.height)
+        for (c in MangaOcr.recognize(mContext, bitmap))
+        {
+            ocrChars.add(SquareCharOcr(displayData, c.choices.toMutableList(), whole))
+        }
+        displayData.assignIndicies()
+        return displayData
     }
 
     private fun getDisplayData(ocrParams: OcrParams, iterator: ResultIterator): DisplayDataOcr

@@ -134,6 +134,31 @@
     <string name="kaku_eim_restart_later" translatable="false">Later</string>
     <string name="kaku_eim_restart_now" translatable="false">Restart now</string>
 
+    <!-- OCR -->
+    <string name="kaku_ocr_sec" translatable="false">OCR</string>
+    <string name="kaku_ocr_sub_engine" translatable="false">Engine</string>
+    <string name="kaku_ocr_engine_manga" translatable="false">MangaOCR</string>
+    <string name="kaku_ocr_engine_manga_desc" translatable="false">The best Japanese OCR there is (the same model as on the desktop): manga, game text, stylised fonts, vertical or horizontal without being told. Reads one block of text at a time — a bubble, a line or a few lines. Needs its model, below.</string>
+    <string name="kaku_ocr_engine_tess" translatable="false">Tesseract</string>
+    <string name="kaku_ocr_engine_tess_desc" translatable="false">Tesseract 5 with the bundled Japanese data. Weaker on stylised text; always available.</string>
+    <string name="kaku_ocr_manga_missing" translatable="false">The MangaOCR model is not imported yet — Tesseract reads meanwhile.</string>
+    <string name="kaku_ocr_sub_manga" translatable="false">MangaOCR model</string>
+    <string name="kaku_ocr_manga_note" translatable="false">白い熊 画 has no network access: download these three files in a browser (Copy URL puts the address on the clipboard), then tap a row to import it — or import all three at once. About 117 MB together; the OCR data category of Export / Import carries them to a new phone.</string>
+    <string name="kaku_ocr_file_encoder" translatable="false">Encoder (encoder_model_quantized.onnx)</string>
+    <string name="kaku_ocr_file_decoder" translatable="false">Decoder (decoder_model_quantized.onnx)</string>
+    <string name="kaku_ocr_file_vocab" translatable="false">Vocabulary (vocab.txt)</string>
+    <string name="kaku_ocr_file_present" translatable="false">Imported · %1$s</string>
+    <string name="kaku_ocr_file_missing" translatable="false">Not imported</string>
+    <string name="kaku_ocr_copy_url" translatable="false">Copy URL</string>
+    <string name="kaku_ocr_url_copied" translatable="false">URL copied — paste it into a browser.</string>
+    <string name="kaku_ocr_import_all" translatable="false">Import all three…</string>
+    <string name="kaku_ocr_import_all_desc" translatable="false">Pick the three downloaded files together; each is recognised by its name.</string>
+    <string name="kaku_ocr_importing" translatable="false">Importing and checking…</string>
+    <string name="kaku_ocr_import_ok" translatable="false">%1$s: imported · %2$s</string>
+    <string name="kaku_ocr_import_unknown" translatable="false">%1$s: not one of the three MangaOCR files</string>
+    <string name="kaku_ocr_import_done_title" translatable="false">Import finished</string>
+    <string name="kaku_ocr_import_fail_title" translatable="false">Import incomplete</string>
+
     <!-- 保存復元 automation (sister-app contract v2) -->
     <string name="kaku_auto_switch" translatable="false">Automation export</string>
     <string name="kaku_auto_switch_desc" translatable="false">Let sister apps (白い熊 応用管理 · 白い熊 自由作業盤) run this export headlessly and back the data up. On by default.</string>

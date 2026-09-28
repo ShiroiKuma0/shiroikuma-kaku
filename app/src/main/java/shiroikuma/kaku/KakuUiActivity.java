@@ -38,6 +38,8 @@ import java.util.Locale;
 import ca.fuwafuwa.kaku.R;
 import shiroikuma.kaku.automation.AutomationAuth;
 import shiroikuma.kaku.backup.ShiroikumaExport;
+import shiroikuma.kaku.ocr.MangaOcr;
+import shiroikuma.kaku.ocr.OcrImport;
 
 /**
  * 白い熊 画 UI — the fork's settings page: every configurable item of the fork, grouped, black-
@@ -56,6 +58,10 @@ public class KakuUiActivity extends Activity implements ExportImportPanel.Host {
     private static final int REQ_DIR = 41;
     private static final int REQ_IMPORT = 42;
     private static final int REQ_FONT = 43;
+    private static final int REQ_OCR_ENCODER = 44;
+    private static final int REQ_OCR_DECODER = 45;
+    private static final int REQ_OCR_VOCAB = 46;
+    private static final int REQ_OCR_ALL = 47;
 
     private static final int IND_HEAD = 36;
     private static final int IND_SUB = 54;
@@ -144,6 +150,7 @@ public class KakuUiActivity extends Activity implements ExportImportPanel.Host {
 
         sectionExportImport();
         sectionBehaviour();
+        sectionOcr();
         sectionColours();
         sectionShapes();
         sectionFonts();
@@ -254,6 +261,117 @@ public class KakuUiActivity extends Activity implements ExportImportPanel.Host {
                             KakuUi.reset();
                             rebuild();
                         }));
+    }
+
+    // ---- OCR -----------------------------------------------------------------------------------------
+
+    private void sectionOcr() {
+        heading(getString(R.string.kaku_ocr_sec), false);
+
+        sub(getString(R.string.kaku_ocr_sub_engine));
+        final boolean manga = KakuUi.ENGINE_MANGAOCR.equals(KakuUi.s(KakuUi.OCR_ENGINE));
+        final boolean installed = MangaOcr.INSTANCE.installed(this);
+        itemRow(IND_L2, getString(R.string.kaku_ocr_engine_manga), getString(R.string.kaku_ocr_engine_manga_desc),
+                check(manga), v -> {
+                    KakuUi.set(KakuUi.OCR_ENGINE, KakuUi.ENGINE_MANGAOCR);
+                    rebuild();
+                });
+        itemRow(IND_L2, getString(R.string.kaku_ocr_engine_tess), getString(R.string.kaku_ocr_engine_tess_desc),
+                check(!manga), v -> {
+                    KakuUi.set(KakuUi.OCR_ENGINE, KakuUi.ENGINE_TESSERACT);
+                    rebuild();
+                });
+        if (manga && !installed) warnNote(getString(R.string.kaku_ocr_manga_missing));
+
+        sub(getString(R.string.kaku_ocr_sub_manga));
+        note(getString(R.string.kaku_ocr_manga_note));
+        ocrFileRow(R.string.kaku_ocr_file_encoder, MangaOcr.ENCODER, MangaOcr.URL_ENCODER, REQ_OCR_ENCODER);
+        ocrFileRow(R.string.kaku_ocr_file_decoder, MangaOcr.DECODER, MangaOcr.URL_DECODER, REQ_OCR_DECODER);
+        ocrFileRow(R.string.kaku_ocr_file_vocab, MangaOcr.VOCAB, MangaOcr.URL_VOCAB, REQ_OCR_VOCAB);
+        itemRow(IND_L2, getString(R.string.kaku_ocr_import_all), getString(R.string.kaku_ocr_import_all_desc), null, v -> {
+            Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            i.addCategory(Intent.CATEGORY_OPENABLE);
+            i.setType("*/*");
+            i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+            startActivityForResult(i, REQ_OCR_ALL);
+        });
+    }
+
+    /** A ✓ in the accent colour for the chosen option, an empty slot of the same width otherwise. */
+    private View check(boolean on) {
+        TextView tv = body(on ? "✓" : "", 20, accent(), false, true);
+        tv.setGravity(Gravity.CENTER);
+        tv.setMinWidth(dp(28));
+        return tv;
+    }
+
+    private void warnNote(String text) {
+        TextView tv = body(text, 13, KakuUi.WARN, false, false);
+        tv.setPadding(dp(IND_L2), dp(2), dp(16), dp(2));
+        page.addView(tv);
+    }
+
+    /**
+     * One MangaOCR file: installed with its size (yellow) or not imported (red), then where to get
+     * it — the Copy URL pill puts the address on the clipboard for a browser; a tap imports.
+     */
+    private void ocrFileRow(int titleRes, final String name, final String url, final int req) {
+        java.io.File f = MangaOcr.INSTANCE.file(this, name);
+        boolean present = f.isFile() && f.length() > 0;
+        SpannableStringBuilder sb = new SpannableStringBuilder();
+        int start = sb.length();
+        sb.append(present ? getString(R.string.kaku_ocr_file_present, ShiroikumaExport.humanSize(f.length()))
+                : getString(R.string.kaku_ocr_file_missing));
+        sb.setSpan(new ForegroundColorSpan(present ? ink() : KakuUi.WARN), start, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        sb.append('\n').append(url);
+        View copy = KakuViews.pill(this, getString(R.string.kaku_ocr_copy_url), v -> {
+            ClipboardManager cb = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            if (cb != null) {
+                cb.setPrimaryClip(ClipData.newPlainText("url", url));
+                KakuViews.toast(this, getString(R.string.kaku_ocr_url_copied));
+            }
+        });
+        itemRow(IND_L2, getString(titleRes), sb, copy, v -> {
+            Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            i.addCategory(Intent.CATEGORY_OPENABLE);
+            i.setType("*/*");
+            startActivityForResult(i, req);
+        });
+    }
+
+    /** Copy picked files in, off the main thread; the page repaints with the new status. */
+    private void importOcrFiles(final java.util.List<Uri> uris, @Nullable final String forcedTarget) {
+        KakuViews.toast(this, getString(R.string.kaku_ocr_importing));
+        final Context app = getApplicationContext();
+        new Thread(() -> {
+            StringBuilder report = new StringBuilder();
+            boolean failed = false;
+            for (Uri uri : uris) {
+                String picked = OcrImport.INSTANCE.displayName(app, uri);
+                String target = forcedTarget != null ? forcedTarget : OcrImport.INSTANCE.classify(picked);
+                if (report.length() > 0) report.append('\n');
+                if (target == null) {
+                    failed = true;
+                    report.append(getString(R.string.kaku_ocr_import_unknown, String.valueOf(picked)));
+                    continue;
+                }
+                try {
+                    long bytes = OcrImport.INSTANCE.importFile(app, uri, target);
+                    report.append(getString(R.string.kaku_ocr_import_ok, target, ShiroikumaExport.humanSize(bytes)));
+                } catch (Exception e) {
+                    failed = true;
+                    report.append(target).append(": ").append(e.getMessage());
+                }
+            }
+            final boolean anyFailed = failed;
+            final String body = report.toString();
+            runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) return;
+                rebuild();
+                KakuViews.showInfo(this, getString(anyFailed ? R.string.kaku_ocr_import_fail_title : R.string.kaku_ocr_import_done_title),
+                        body, true, null);
+            });
+        }, "kaku-ocr-import").start();
     }
 
     // ---- 3. Colours --------------------------------------------------------------------------------
@@ -890,6 +1008,20 @@ public class KakuUiActivity extends Activity implements ExportImportPanel.Host {
             rebuild();
         } else if (requestCode == REQ_IMPORT) {
             panel.onImportFilePicked(uri);
+        } else if (requestCode == REQ_OCR_ENCODER || requestCode == REQ_OCR_DECODER || requestCode == REQ_OCR_VOCAB) {
+            if (uri != null) {
+                String target = requestCode == REQ_OCR_ENCODER ? MangaOcr.ENCODER
+                        : requestCode == REQ_OCR_DECODER ? MangaOcr.DECODER : MangaOcr.VOCAB;
+                importOcrFiles(java.util.Collections.singletonList(uri), target);
+            }
+        } else if (requestCode == REQ_OCR_ALL && resultCode == RESULT_OK && data != null) {
+            java.util.List<Uri> uris = new java.util.ArrayList<>();
+            if (data.getClipData() != null) {
+                for (int i = 0; i < data.getClipData().getItemCount(); i++) uris.add(data.getClipData().getItemAt(i).getUri());
+            } else if (data.getData() != null) {
+                uris.add(data.getData());
+            }
+            if (!uris.isEmpty()) importOcrFiles(uris, null);
         } else if (requestCode == REQ_FONT && uri != null) {
             try {
                 String id = KakuFonts.importFont(this, uri);

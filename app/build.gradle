@@ -37,6 +37,11 @@ android {
         }
     }
     packaging {
+        // Compress the native libraries (ONNX Runtime's is 28 MB raw): a smaller APK to carry and
+        // back up, for a one-time extraction at install.
+        jniLibs {
+            useLegacyPackaging true
+        }
         resources {
             excludes += ['META-INF/DEPENDENCIES', 'META-INF/LICENSE', 'META-INF/LICENSE.txt', 'META-INF/license.txt', 'META-INF/NOTICE', 'META-INF/NOTICE.txt', 'META-INF/notice.txt', 'META-INF/ASL2.0', 'META-INF/CONTRIBUTORS.md', 'META-INF/LICENSE.md']
         }
@@ -63,6 +68,8 @@ dependencies {
     implementation 'com.atilika.kuromoji:kuromoji-ipadic:0.9.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
     implementation 'androidx.documentfile:documentfile:1.1.0'
+    // MangaOCR on the device (MIT) — the int8 ONNX export of kha-white/manga-ocr-base, imported by hand.
+    implementation 'com.microsoft.onnxruntime:onnxruntime-android:1.27.0'
     testImplementation 'junit:junit:4.13.2'
     // Probably just delete all these was trying to get GenerateDictionary to work as a Unit Test
     testImplementation 'com.j256.ormlite:ormlite-core:5.1'
