@@ -12,7 +12,7 @@ them, **camera OCR**, a full black-yellow settings page, backup and restore — 
 
 Installs **side-by-side** with Kaku (app id `shiroikuma.kaku`).
 
-**📥 Latest release: [`0.1.0+024`](https://github.com/ShiroiKuma0/shiroikuma-kaku/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-kaku/releases)
+**📥 Latest release: [`0.1.0+025`](https://github.com/ShiroiKuma0/shiroikuma-kaku/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-kaku/releases)
 
 </div>
 

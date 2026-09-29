@@ -4,6 +4,16 @@
 Upstream keeps no changelog and stopped in 2022, so this file carries the fork's own history alone,
 newest release first.
 
+## 白い熊 画 0.1.0+025 — 2026-09-29
+
+A bug-fix release, built on Kaku 1.3.81 (upstream `master` 02ee884) like 0.1.0+024.
+
+### Fixes
+- **The result window shows dictionary results again.** Since 0.1.0+023 the lookup found the word
+  (the characters were highlighted) but the dictionary part of the window stayed empty: the script
+  that tells the window how tall the page is was added only to the instant popup's page, so the
+  result window's view kept a height of 0. Every page reports its height again.
+
 ## 白い熊 画 0.1.0+024 — 2026-09-28
 
 The first release of the fork, built on Kaku 1.3.81 (upstream `master` 02ee884, 2022). Everything
