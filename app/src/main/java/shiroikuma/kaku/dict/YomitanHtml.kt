@@ -123,7 +123,7 @@ object YomitanHtml
         for (k in kanji) kanji(sb, k)
         sb.append("<script>")
         if (options.compact && options.maxSenses > 0) sb.append(compactScript(options.maxSenses))
-                .append("function h(){KakuHost.height(Math.ceil(document.documentElement.getBoundingClientRect().height));}")
+        sb.append("function h(){KakuHost.height(Math.ceil(document.documentElement.getBoundingClientRect().height));}")
                 .append("new ResizeObserver(h).observe(document.documentElement);h();")
                 .append("</script></body></html>")
         return sb.toString()

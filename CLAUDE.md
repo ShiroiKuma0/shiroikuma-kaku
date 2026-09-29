@@ -194,6 +194,17 @@ because the dead `JmTask` path still references it.
   (`DictWebView.onContentHeight` → `fitToContent`, again when pictures load), full width up to
   400 dp. `YomitanText` / `DictText.build` are no longer used by any window.
 
+## Test data (`.scratch/dict/`, gitignored)
+
+The real dictionaries the JVM tests run against, kept out of git: `JMdict_english.zip`,
+`KANJIDIC_english.zip`, `JPDB.zip` (for `YomitanReaderTest`) and `jitendex-yomitan.zip` (Jitendex
+2026-08-11, for `YomitanHtmlTest.jitendexPage`; the same file is on the phone as
+`/sdcard/tmp/jitendex-yomitan_2026-08-11.zip`). Run with `KAKU_DICT_DIR=$PWD/.scratch/dict`; the
+display test also wants `KAKU_HTML_OUT=<file>.html` (optional `KAKU_WORDS=食べる,掛ける`,
+`KAKU_COMPACT=1`, `KAKU_BACK=<word>`) and writes the page plus a `media/` folder beside it — view
+it in `chromium --headless --allow-file-access-from-files --screenshot …`. Without the env vars the
+data tests are skipped.
+
 ## Instant mode
 
 Upstream read a released box (after a move or resize, `CaptureWindow.onUp` → `setCroppedScreenshot`)
